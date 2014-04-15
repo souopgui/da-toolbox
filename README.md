@@ -1,4 +1,4 @@
-test
+Data Assimilation toolbox
 ====
 
-For testing only
+Set of fortran programs used for Data Assimilation.
