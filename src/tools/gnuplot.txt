@@ -1,0 +1,10 @@
+
+splot 'grad_adj_adjointmt.dat' matrix with pm3d t "adjoint"
+unset border; unset xtics; unset ytics; unset ztics
+set palette rgbformulae -10,-13,-26
+plot 'bg_b_ctl_plot.dat' using 1:2 w l, 'assim_a_ctl_plot.dat' using 1:2 w l, 'ctl_ctl_plot.dat' using 1:2 w l
+plot '0.432_assim_dms_plot.dat' using 1:2 w l, '0.432_obs_dms_plot.dat' using 1:2 w l, '0.432_obs_obs_plot.dat' using 1:2 w l
+plot '../grad_test.dat' using 1:2 w lp title 'gradient test', '../grad_test.dat' using 1:3 w l title 'y=1'
+plot '0.000_assim_dms_plot.dat' using 1:2 w l, '0.000_obs_dms_plot.dat' using 1:2 w lp
+set terminal pngcairo size 350,262 enhanced font 'Verdana,10'
+set output 'grad_test.png'

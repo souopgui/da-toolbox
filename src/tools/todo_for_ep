@@ -1,0 +1,18 @@
+Todo
+
+Make sure that the following is done when necessary at the opening before calling read_ep_internal
+    CALL set_ctlsize(td_ep, il_nctl)
+    td_ep%i_ctl_lev = il_ctl_lev
+
+replace call to
+		read_ctl_size_internal
+by
+
+    CALL set_ctlsize(td_ep, il_nctl)
+    td_ep%i_ctl_lev = il_ctl_lev
+
+
+Check read_ctl_internal and write_ctl_internal and make sure that anyone is used at the right place
+Also check read_dctl_internal and write_dctl_internal
+
+Add the fiel ra_dctlid
