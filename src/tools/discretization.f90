@@ -6,11 +6,11 @@
 
 !> @brief Discretization module, define data structures and subroutines for finite difference-type discretization.
 !! @todo
-!! Update modules using the discretization module. A correction has been made on May 23rd 2014 by Innocent.
-!! Now, there is a discretization point at each end of the domain in each direction.
-!! Previously, there was no discretization point at the min coordinate, left boundary of the domain.
-!! The change affects coordinates only if the number of discretization points is set in the input file (namelist)
-!!
+!! Check the behavior of modules that uses the discretization module. A correction has been made on May 23rd 2014 by Innocent.
+!! The modification should affect function that computes something as a function of the physical coordinates given by the discretization parameter
+!! In the normal case, it should not affects computations that does not used physical coordinates directly.
+!! Now, there is a discretization point at each end of the domain in each direction. The number of discretization points if 1 unit greater than the number of cells.
+!! Previously, there was no discretization point at the min coordinate, The number of discretization points corresponded to the number of cells.
 !!
 !<
 MODULE discretization
@@ -107,11 +107,11 @@ CONTAINS
     end select
     select case (toLower(domainType))
       case('d')!discrete information
-        domainSize = nPoint*delta_space
-        positive_size = (count(delta_space>0.0)==nDimension)
+        domainSize = (nPoint-1)*delta_space
+        positive_size = (count(delta_space>epsilon(1.0))==nDimension)
       case('c')!continuous information
-        positive_size = (count(domainSize>0.0)==nDimension)
-        delta_space = domainSize/nPoint
+        positive_size = (count(domainSize>epsilon(1.0))==nDimension)
+        delta_space = domainSize/(nPoint-1)
       case default
         call stop_program('Bad type of domain type, should be "c" for continuous or "d" for discrete, check the namelist')
     end select
@@ -209,9 +209,8 @@ CONTAINS
     end if
     if(toLower(dir)/='t')then
       allocate(coords(n))
-      !/!\ need a correction
       do i = 1,n
-        coords(i) = minCoord + real(i,cp)*delta
+        coords(i) = minCoord + real(i-1,cp)*delta
       end do
     end if
     select case(toLower(dir))
