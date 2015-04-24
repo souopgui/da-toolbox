@@ -24,8 +24,8 @@ implicit none
   type exp_cov_param
     integer:: n !< Number of grid point
     integer:: k !< Number of significant eigenvalues/singular values to be kept
-    real(dp):: d !< discretization step
-    real(dp):: s !< smoothing parameter of the covariance function (variance at a single point)
+    real(dp):: dx !< discretization step
+    real(dp):: s !< smoothing parameter of the covariance function (standard deviation at a single point)
     real(dp):: l !< decorrelation length
   end type exp_cov_param
 
@@ -82,7 +82,7 @@ contains
     ecp = exp_cov_param(n, nsv, delta, smoothing, decorrelation)
   end subroutine load_ecp
 
-  !> Computes the square exponential covariance matrix for a 1D uniform grid, using exp_cov_param derived type
+  !> @brief Computes the square exponential covariance matrix for a 1D uniform grid, using exp_cov_param derived type
   !! @param [in, out] C square matrix of covariance
   !! @param [in] xcp covariance parameters in the x dimension
   !!
@@ -92,17 +92,17 @@ contains
     real(dp), dimension(:,:), intent(in out) :: C
     type(exp_cov_param), intent(in) :: xcp
 
-    call se_cov_matrix_scalar(C, xcp%d, xcp%s, xcp%l)
+    call se_cov_matrix_scalar(C, xcp%dx, xcp%s, xcp%l)
   end subroutine se_cov_matrix_type
 
-  !> Computes the square exponential covariance matrix for a 1D uniform grid, using scalar parameters
+  !> @brief Computes the square exponential covariance matrix for a 1D uniform grid, using scalar parameters
   !! @param [in, out] C square matrix of covariance
   !! @param [in] dx discretization step
-  !! @param [in] s smoothing parameter of the covariance function
+  !! @param [in] s smoothing parameter of the covariance function (standard deviation)
   !! @param [in] lx correlation length
   !!
   !! The covariance betwen the grid points i and j is given by
-  !! \f$ C(i,j) = s^2\exp(\frac{-(i\Delta x-j\Delta x)^2}{2l_x^2}) \f$
+  !! \f$ C(i,j) = s^2\exp(\frac{-(i\Delta_x-j\Delta_x)^2}{2l_x^2}) \f$
   !>
   subroutine se_cov_matrix_scalar(C, dx, s, lx)
     real(dp), dimension(:,:), intent(in out) :: C
@@ -138,7 +138,7 @@ contains
     !C = dx*C
   end subroutine se_cov_matrix_scalar
 
-  !> Covariance function using exponential of the square
+  !> @brief Covariance function using exponential of the square
   !! @param [in] x1, x2 points between which the covariance is evaluated
   !! @param [in] s smoothing parameter of the covariance function
   !! @param [in] lx decorrelation length
@@ -153,7 +153,7 @@ contains
     f = s*s*exp(-x*x/(2*lx*lx))
   end function se_cov_function
 
-  !> Covariance function using exponential of absolute value
+  !> @brief Covariance function using exponential of absolute value
   !! @param [in] x1, x2 points between which the covariance is evaluated
   !! @param [in] s smoothing parameter of the covariance function; this is the varaince
   !! @param [in] lx decorrelation length

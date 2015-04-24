@@ -11,19 +11,36 @@
 ! !! Using the positive (semi) definiteness of the covariance matrices, the covariance matrix B is diagonalizable
 ! !! and its singular value decomposition is also its diagonalization in a basis of eigenvectors.
 ! !! We consider the case where B is approximated using only the leading eigenvectors, the full case being similar.
-! !! The covariance matrix is supposed to be given under a factorized forms \f[ B \approx UDU^T \f] where the colums of U are the leading eigenvectors of B and D is the diagonal matrix of the leading eigenvalues of B.
+! !! The covariance matrix is supposed to be given under a factorized forms
+! !!   \f[ B \approx UDU^T \f] where the colums of U are the leading eigenvectors
+! !!   of B and D is the diagonal matrix of the leading eigenvalues of B.
 ! !! For the 2D, we consider the covariance function that factorises as a product of covariance functions
 ! !! in each spatial dimension; so that the covariance matrix B is the kronecker product of the covariance
 ! !! matrices in the single dimensions \f[ B = Kron(Bx,By) \f]. Bx and By are given under their factorized forms
 ! !! \f[ B Kron(Ux,Uy)*Kron(Dx,Dy)*Kron(Ux,Uy)^T \f], where Dx is a diagonal matrix with leading eigenvalues
 ! !! of Bx on the diagonal and Dy is a diagonal matrix with eigenvalues of By on the diagonal
 ! !! Bx = Ux*Dx*Ux^T,  By = Uy*Dy*Uy^T.
-! !!The 2D covariance matrix applies to a vector that correspond to a discretization of a 2d function (function of two variables) on the same grid as the control variable. The chronecker product factorization depends on the ordering of the dimensions in the discretization as well as the vectorization of the 2D discretized function.
-! !!Suppose that the covariance function factorizes such that the covariances on the grid are combinations of the covariances in each direction, cov(p1, p2) = cov_x(x1,x2)cov_y(y1,y2) where p1 is the point of coordinates (x1,y1) and p2 (x2,y2). In this case B*f = Kron(B_x,B_y)*f where B_x and B_y are respectively the covariances in the direction x, resp. y.
-! !! According to the ordering of the discretization points and the vectorization order, that formula may change:
+! !!The 2D covariance matrix applies to a vector that correspond to a discretization of
+! !!  a 2d function (function of two variables) on the same grid as the control
+! !!  variable. The chronecker product factorization depends on the ordering of
+! !!  the dimensions in the discretization as well as the vectorization of the
+! !!  2D discretized function.
+! !!Suppose that the covariance function factorizes such that the covariances on
+! !!  the grid are combinations of the covariances in each direction,
+! !!  cov(p1, p2) = cov_x(x1,x2)cov_y(y1,y2) where p1 is the point of coordinates
+! !!  (x1,y1) and p2 (x2,y2). In this case B*f = Kron(B_x,B_y)*f where B_x and
+! !!  B_y are respectively the covariances in the direction x, resp. y.
+! !! According to the ordering of the discretization points and the vectorization
+! !!   order, that formula may change:
 ! !! Let F be the matrix of a discretized function, and f its vectorized representation.
-! !!if the first dimension of F corresponds to the x direction (x-leading) then, g=B*f = Kron(B_x,B_y)*f, if f is a row major vectorization (C-prefered ordering); and g=B*f = Kron(B_y,B_x)*f, if f is a column major vectorization (Fortran-prefered ordering).
-! !!if the first dimension of F corresponds to the y direction (y-leading) then, g=B*f = Kron(B_y,B_x)*f with a row major vectorization (C-prefered ordering) of F; and g=B*f = Kron(B_x,B_y)*f, with a column major vectorization (Fortran-prefered ordering) of F.
+! !!if the first dimension of F corresponds to the x direction (x-leading) then,
+! !!  g=B*f = Kron(B_x,B_y)*f, if f is a row major vectorization (C-prefered ordering);
+! !!  and g=B*f = Kron(B_y,B_x)*f, if f is a column major vectorization
+! !!  (Fortran-prefered ordering).
+! !!if the first dimension of F corresponds to the y direction (y-leading) then,
+! !! g=B*f = Kron(B_y,B_x)*f with a row major vectorization (C-prefered ordering)
+! !! of F; and g=B*f = Kron(B_x,B_y)*f, with a column major vectorization
+! !! (Fortran-prefered ordering) of F.
 ! !! All the 2D routines in this module supposed either:
 ! !! x-leading and and row major vectorization or
 ! !! y-leading and the column major vectorization
@@ -206,7 +223,10 @@
 !   !! \param[in, out] C covariance matrix derived type
 !   !! \param[in] dir directory containing the data files
 !   !!
-!   !! \details It is assumed that the covariance matrix B is provided as its Singular Value Decomposition: B = UDU^t. Furthermore, it can be (Kronecker) factorized (for example along the physical dimensions of the problem) in which case it is given under the form:
+!   !! \details It is assumed that the covariance matrix B is provided as its
+!   !!  Singular Value Decomposition: B = UDU^t. Furthermore, it can be
+!   !!  (Kronecker) factorized (for example along the physical dimensions of
+!   !!  the problem) in which case it is given under the form:
 !   !! - B = Bx kron By = (UxDxUx^t) kron (UyDyUy^t) or
 !   !! - B = Bx kron By kron Bz = (UxDxUx^t) kron (UyDyUy^t) kron (UzDzUz^t)
 !   !! Conventions for the file names. Data files are named after the matrices names with the extension 'dat'

@@ -1,7 +1,7 @@
-!> \file cs_tools.f90
-!! \brief general tools for compressive sensing
+!> @file cs_tools.f90
+!! @brief general tools for compressive sensing
 !! @author Innocent Souopgui
-!! \details
+!! @details
 !! generating random indexes and random coefficients for tests
 !<
 MODULE cs_tools
@@ -14,18 +14,18 @@ IMPLICIT NONE
 
 CONTAINS
 
-  !> \brief generate random values and store at random indexes of a vector
-  !! \param(INOUT) rda_x array containing the generated values
-  !! \param(IN) rd_nz_ratio ratio of nonzero coefficients to be generated
-  !! \param(IN) rd_maxval, (Optional) if present, specifies the maximum value to be generated
-  !! \param(IN) ida_idx, (Optional) if present, contains the indexes of nonzero element of rda_x
+  !> @brief generate random values and store at random indexes of a vector
+  !! @param [in,out] rda_x array containing the generated values
+  !! @param [in] rd_nz_ratio ratio of nonzero coefficients to be generated
+  !! @param [in] rd_maxval (Optional) if present, specifies the maximum value to be generated
+  !! @param [in] ida_idx (Optional) if present, contains the indexes of nonzero element of rda_x
   !! The routine first generates id_nval non redundant indexes in the range 1..size(rda_x), and then generates id_nval random numbers and their sign, and stores at generated indexes
   !! the system random generator is used first and the generated values are scaled with rd_maxval if present
   !<
   SUBROUTINE randval_randidx(rda_x, rd_nz_ratio, rd_maxval, ida_idx)
-    REAL(KIND=cp), INTENT(IN) :: rd_nz_ratio
+    REAL(KIND=cp), INTENT(in) :: rd_nz_ratio
     REAL(KIND=cp), DIMENSION(:), INTENT(INOUT)   :: rda_x
-    REAL(KIND=cp), OPTIONAL, INTENT(IN)          :: rd_maxval
+    REAL(KIND=cp), OPTIONAL, INTENT(in)          :: rd_maxval
     INTEGER, DIMENSION(:), OPTIONAL, INTENT(OUT) :: ida_idx
 
     !local variables
@@ -62,15 +62,15 @@ CONTAINS
   END SUBROUTINE randval_randidx
 
   !>\brief generate a non redundant array of random integer values, each number being less or equal to id_max
-  !!\param[in] id_max max value
-  !!\param[in,out] ida_idx array containing the generated numbers
-  !!\param[in] stat return status, 0 for good and other thing for bad
+  !!@param [in] id_max max value
+  !!@param [in,out] ida_idx array containing the generated numbers
+  !!@param [in] stat return status, 0 for good and other thing for bad
   !!\details This routine is use to generate a non redundant array of integer values.
   !!These values are intended to be uses as random indexes in compressive sensing.
   !! random numbeer generator is supposed to be initialized
   !<
   SUBROUTINE random_indexes(ida_idx, id_max, stat)
-    INTEGER, INTENT(IN) :: id_max
+    INTEGER, INTENT(in) :: id_max
     INTEGER, DIMENSION(:), INTENT(INOUT) :: ida_idx
     INTEGER, OPTIONAL, INTENT(OUT) :: stat
     !local variables
@@ -121,8 +121,8 @@ CONTAINS
   !!
   !<
   SUBROUTINE linspace(rd_a, rd_b, id_n, rda_x)
-    REAL(KIND=cp), INTENT(IN) :: rd_a, rd_b
-    INTEGER, INTENT(IN) :: id_n
+    REAL(KIND=cp), INTENT(in) :: rd_a, rd_b
+    INTEGER, INTENT(in) :: id_n
     REAL(KIND=cp), DIMENSION(:), INTENT(OUT) :: rda_x
     !local variables
     INTEGER :: ibi
@@ -133,12 +133,12 @@ CONTAINS
   END SUBROUTINE linspace
 
   !> \brief evaluate polynomial function at equispaced points in the interval [0, 1]
-  !! \param[in] rda_a coefficients of the polynomial funtion, these ares the coefs of monomes
-  !! \param[in,out] rda_y values of the evaluated polynomial
+  !! @param [in] rda_a coefficients of the polynomial funtion, these ares the coefs of monomes
+  !! @param [in,out] rda_y values of the evaluated polynomial
   !! \details the polynomial is evaluated at equispaced points in the interval [0, 1]
   !<
   SUBROUTINE poly_eval(rda_a, rda_y)
-    REAL(KIND=cp), DIMENSION(:), INTENT(IN)    :: rda_a
+    REAL(KIND=cp), DIMENSION(:), INTENT(in)    :: rda_a
     REAL(KIND=cp), DIMENSION(:), INTENT(INOUT) :: rda_y
     !local variables
     INTEGER :: ibi, ibj, il_n
@@ -161,9 +161,9 @@ CONTAINS
   !> \brief adjoint of polynomial evaluation
   !<
   SUBROUTINE poly_evalb(rda_a, rda_ab, rda_y, rda_yb)
-    REAL(KIND=cp), DIMENSION(:), INTENT(IN)    :: rda_a
+    REAL(KIND=cp), DIMENSION(:), INTENT(in)    :: rda_a
     REAL(KIND=cp), DIMENSION(:), INTENT(INOUT) :: rda_ab
-    REAL(KIND=cp), DIMENSION(:), INTENT(IN)    :: rda_y
+    REAL(KIND=cp), DIMENSION(:), INTENT(in)    :: rda_y
     REAL(KIND=cp), DIMENSION(:), INTENT(INOUT) :: rda_yb
     !local variables
     INTEGER :: ibi, ibj, il_n
@@ -198,7 +198,7 @@ CONTAINS
   END SUBROUTINE init_cs_tools
 
   !>\brief Terminates the compressive sensing environment
-  !!\detail This routine does nothing. Only the associated routine init_cs_tools is usefull.
+  !!\details This routine does nothing. Only the associated routine init_cs_tools is usefull.
   !!For conformance, it should be used so that the use of finalize make logical sense
   !<
   SUBROUTINE finalize_cs_tools()
@@ -211,7 +211,7 @@ CONTAINS
   END SUBROUTINE init_poly_tools
 
   !>\brief Terminates the polynomial environment
-  !!\detail This routine does nothing. Only the associated routine init_poly_tools is usefull.
+  !!\details This routine does nothing. Only the associated routine init_poly_tools is usefull.
   !!For conformance, it should be used so that the use of finalize make logical sense
   !<
   SUBROUTINE finalize_poly_tools()

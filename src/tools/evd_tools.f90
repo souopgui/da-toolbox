@@ -60,7 +60,7 @@ contains
     integer :: nsig, i, incr, first, last
 
     lsum = sum(L)
-    call debug(lsum, "ev_signifivant: sum(L) = ")
+    call debug(lsum, "ev_significant: sum(L) = ")
     if(isNaN(lsum)) call debug(L, 'L = ')
     sigsum = 0.0_dp
     nsig = 0

@@ -1,4 +1,4 @@
-!> \file gradientadj.f90
+!> \file regul_toolsadj.f90
 !! \brief routines to compute the gradient of a discretized (finite differences) function
 !! @author Innocent Souopgui
 !! @version 1.0
@@ -150,8 +150,8 @@ CONTAINS
   END SUBROUTINE gradient_cs_2dAdj
 
   !> \brief Computes the gradient of a scalar function of one variable, variable spacing grid
-  !! \param[in] rda_f function whose the gradient is required
-  !! \param[out] rda_df gradient
+  !! \param[in] rda_fad function whose the gradient is required
+  !! \param[out] rda_dfad gradient
   !! \param[in] rda_x discretization step in the first direction
   !! \param[in] method method used for computation
   !<
@@ -577,9 +577,9 @@ CONTAINS
       rla_f = rda_f
     END IF
     rla_fad = 0.0_dp
-    
+
     CALL square_L2_normAdj(rla_f, rla_fad, rl_regad)
-    
+
     !this part is independent of the presence or not of the background term
     rda_fad = rda_fad + rla_fad
     rla_fad = 0.0_cp

@@ -96,7 +96,7 @@ IMPLICIT NONE
 CONTAINS
 
   !> \brief print data structure for boundary conditions ntcdf file
-  !! \param[in] td_ncfile boundary condition netcdf file data structure
+  !! @param [in] td_ncfile boundary condition netcdf file data structure
   !<
   SUBROUTINE print_bcOutput(td_ncfile)
     type(bcOutput), INTENT(IN) :: td_ncfile
@@ -118,9 +118,9 @@ CONTAINS
   END SUBROUTINE print_bcOutput
 
   !> \brief initializes data structure that is used to saved boundary conditions
-  !! \param[in,out] td_ncfile boundary condition netcdf file data structure
-  !! \param[in] td_bcp parameters to use initialized
-  !! \param[IN] status (optional) status of the file (INPUT_FILE or OUTPUT_FILE), default is OUTPUT_FILE
+  !! @param [in,out] td_ncfile boundary condition netcdf file data structure
+  !! @param [in] td_bcp parameters to use initialized
+  !! @param [in] status (optional) status of the file (INPUT_FILE or OUTPUT_FILE), default is OUTPUT_FILE
   !<
   SUBROUTINE initBCOutput(td_ncfile, td_bcp, status)
     type(bcOutput), INTENT(INOUT) :: td_ncfile
@@ -309,9 +309,9 @@ CONTAINS
   END SUBROUTINE save_bcAtt
 
   !> \brief write boundary conditions data to netcdf file
-  !! \param[in,out] td_ncfile file to be written
-  !! \param[in,out] td_bc data structure that contains the data to write
-  !! \param[in] rec (optional) gives the ordinal number of the record to write
+  !! @param [in,out] td_ncfile file to be written
+  !! @param [in,out] td_bc data structure that contains the data to write
+  !! @param [in] rec (optional) gives the ordinal number of the record to write
   !<
   SUBROUTINE ncBCWrite(td_ncfile, td_bc, rec)
     TYPE(bcOutput), INTENT(INOUT)  :: td_ncfile
@@ -364,9 +364,9 @@ CONTAINS
   END SUBROUTINE ncBCWrite
 
   !> \brief read boundary conditions from netcdf file
-  !! \param[in,out] td_ncfile file to be read from
-  !! \param[in,out] td_bc data structure to contain the read data
-  !! \param[in] rec (optional) gives the ordinal number of the record to read
+  !! @param [in,out] td_ncfile file to be read from
+  !! @param [in,out] td_bc data structure to contain the read data
+  !! @param [in] rec (optional) gives the ordinal number of the record to read
   !<
   SUBROUTINE ncBCRead(td_ncfile, td_bc, rec)
     type(bcOutput), INTENT(INOUT) :: td_ncfile
@@ -449,9 +449,9 @@ CONTAINS
     CALL debug('... done', tag=dNETCDF)
   END SUBROUTINE readBC_AllTimeStep
 
-  !> \this routine checks the conformance of the bd data structure and the netcdf data structure
-  !! \param[in] td_bc BC data structure
-  !! \param[in] td_ncfile netcdf data structure for BC
+  !> \brief this routine checks the conformance of the bd data structure and the netcdf data structure
+  !! @param [in] td_bc BC data structure
+  !! @param [in] td_ncfile netcdf data structure for BC
   !! The program is stopped if there is conformance
   !<
   SUBROUTINE check_conformance(td_bc, td_ncfile)

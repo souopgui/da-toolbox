@@ -25,10 +25,10 @@ IMPLICIT NONE
        SOLVER_PROGRAM = 1111  !< value corresponding to the solver
 
   INTEGER, PARAMETER ::&
-       ip_ctl_out  = 43,& !<id of the output file for the control vector
-       ip_cost_evol= 45,& !<id of the output file for the evolution of the cost function
-       ip_grad_out = 47,& !<id of the output file for the gradient
-       ip_grad_test= 49  !<id of the output file for the test of the gradient
+       ip_ctl_out  = 43,& !< id of the output file for the control vector
+       ip_cost_evol= 45,& !< id of the output file for the evolution of the cost function
+       ip_grad_out = 47,& !< id of the output file for the gradient
+       ip_grad_test= 49   !< id of the output file for the test of the gradient
 
 !-----Constants for the action to be performed by the simulator-----
   !> \brief action value for make obs simulation
@@ -62,6 +62,9 @@ IMPLICIT NONE
   !> \brief action value for Ensemble Kalman Filter analysis
   !<
   CHARACTER(LEN=*), PARAMETER :: RUN_ENKF   = "ENKF"
+  !> \brief action value for Ensemble Kalman Smoother analysis
+  !<
+  CHARACTER(LEN=*), PARAMETER :: RUN_ENKS   = "ENKS"
   !> \brief action value for data assimilation
   !<
   CHARACTER(LEN=*), PARAMETER :: RUN_ASSIM   = "ASSIM"
@@ -120,6 +123,14 @@ IMPLICIT NONE
   CHARACTER(LEN=*), PARAMETER :: MAKE_DMT  = "DMT" !< direct model trajectory
   CHARACTER(LEN=*), PARAMETER :: MAKE_ADMT = "ADMT"!< analysed model trajectory
   CHARACTER(LEN=*), PARAMETER :: MAKE_TDMT = "TDMT"!< true model trajectory
+  !> \brief action value for the first order adjoint sensitivity
+  !! used both by the solver and the simulator
+  !<
+  CHARACTER(LEN=*), PARAMETER :: FOA_SENSITIVITY = "FOA_SENSITIVITY"
+  !> \brief action value for the second order adjoint sensitivity
+  !! used both by the solver and the simulator
+  !<
+  CHARACTER(LEN=*), PARAMETER :: SOA_SENSITIVITY = "SOA_SENSITIVITY"
 !------------------------------------------------------------------------------
 
   !> \brief Maximum size for the action variable
@@ -153,11 +164,10 @@ IMPLICIT NONE
 !     REAL(cp) :: r_v0
 !     REAL(cp) :: r_omega
 
-!     !regularization weighting parameters
-!     LOGICAl  :: l_useGD !< use Generalized diffusion projection?
-!     REAL(cp) :: r_wGD   !< weighting parameter for the GD term
-!     REAL(cp) :: r_wb    !< background weighting parameter
-!     REAL(cp) :: r_wGrad !< weighting parameter for gradient regularization
+     !regularization weighting parameters
+     LOGICAl  :: l_useGD !< use Generalized diffusion projection?
+     REAL(cp) :: r_wb    !< background weighting parameter
+     REAL(cp) :: r_wGrad !< weighting parameter for gradient regularization
 !
 !     !informations on control parameters
 !     REAL(cp):: r_sigmaB !< standard deviation of error in the background, used for synthetic background
@@ -184,13 +194,14 @@ IMPLICIT NONE
 
     !control parameters
     INTEGER  :: i_nctl=0 !< size of the control vector!, PRIVATE
-    INTEGER  :: i_npctl=0 !< size of the Preconditionned control vector!, PRIVATE
+    INTEGER  :: i_npctl=0!< size of the Preconditionned control vector!, PRIVATE
     REAL(cp) :: r_cost   !< value of the cost function at ctl
+    REAL(cp) :: r_costf  !< value of the tangent linear of the cost function at ctl (f for forward)
     REAL(cp) :: r_costb  !< adjoint of the cost function at ctl, used for convenience in the adjoint code
     INTEGER  :: i_ctl_lev !<level of ctl when using wavelet model
     LOGICAl  :: l_B_matrix=.FALSE. !< Says if B and Binv are given under the form of matrices, default if FALSE
-    REAL(cp), DIMENSION(:), POINTER :: ra_dctl       => NULL()!< control vector
-    REAL(cp), DIMENSION(:), POINTER :: ra_pctl   => NULL()!< preconditionned control vector
+    REAL(cp), DIMENSION(:), POINTER :: ra_dctl      => NULL()!< control vector
+    REAL(cp), DIMENSION(:), POINTER :: ra_pctl      => NULL()!< preconditionned control vector
     REAL(cp), DIMENSION(:), POINTER :: ra_grad      => NULL()!< grad of the cost function at the control vector
     REAL(cp), DIMENSION(:), POINTER :: ra_b_ctl     => NULL()!< background control vector
     REAL(cp), DIMENSION(:), POINTER :: ra_sigma_ctl => NULL()!< standard deviation of errors in the b_ctl
@@ -204,7 +215,7 @@ IMPLICIT NONE
     REAL(dp), DIMENSION(:,:), POINTER :: ra_rcoord => NULL()
     !Matrix covariance and inverse
     REAL(cp), DIMENSION(:,:), POINTER :: ra_B_mat => NULL()   !< covariance matrix of errors in the b_ctl
-    REAL(cp), DIMENSION(:,:), POINTER :: ra_Binv_mat => NULL()!< inverse covariance matrixof errors in the b_ctl
+    REAL(cp), DIMENSION(:,:), POINTER :: ra_Binv_mat => NULL()!< inverse covariance matrix of errors in the b_ctl
 
     !checking parameters
     REAL(cp) :: r_nothing!< use to avoid non used warning in some generic subroutines
@@ -261,11 +272,11 @@ IMPLICIT NONE
 !       r_omega = "r_omega"
 
 !     !regularization weighting parameters
-!     CHARACTER(LEN=ip_cnl)  ::&
-!       l_useGD = "l_useGD",&
-!       r_wGD   = "r_wGD",&
-!       r_wb    = "r_wb",&
-!       r_wGrad = "r_wGrad"
+    CHARACTER(LEN=ip_cnl)  ::&
+      l_useGD = "l_useGD",&
+      r_wb    = "r_wb",&
+      r_wGrad = "r_wGrad"
+      !r_wGD   = "r_wGD",&
 !
 !     !informations on control parameters
 !     CHARACTER(LEN=ip_cnl) ::&
@@ -419,10 +430,10 @@ CONTAINS
   !
 
   !> \brief Initializes the netcdf file data strucontaining the exchange parameter
-  !! \param[in, out] td_ncfile file data structure
-  !! \param[in] ada_fileName name of the netcdf file
-  !! \param[in] nctl size of the control variable
-  !! \param[in] npctl size of the preconditionned control variable
+  !! @param [in, out] td_ncfile file data structure
+  !! @param [in] ada_fileName name of the netcdf file
+  !! @param [in] nctl size of the control variable
+  !! @param [in] npctl size of the preconditionned control variable
   !<
   SUBROUTINE initEPOutput(td_ncfile, ada_fileName, nctl, npctl)
     type(exchange_param_output), INTENT(INOUT)    :: td_ncfile
@@ -437,7 +448,7 @@ CONTAINS
   END SUBROUTINE initEPOutput
 
   !> \brief Closes the netcdf file containing the exchange parameter
-  !! \param[in, out] td_ncfile file data structure
+  !! @param [in, out] td_ncfile file data structure
   !<
   SUBROUTINE ncEPclose(td_ncfile)
     type(exchange_param_output), INTENT(INOUT) :: td_ncfile
@@ -448,8 +459,8 @@ CONTAINS
   END SUBROUTINE ncEPclose
 
   !> \brief Opens the netcdf file containing the exchange parameter
-  !! \param[in, out] td_ncfile file data structure
-  !! \param[in] td_ep exchange parameter structure
+  !! @param [in, out] td_ncfile file data structure
+  !! @param [in] td_ep exchange parameter structure
   !<
   SUBROUTINE ncEPOpen(td_ncfile, td_ep)
     TYPE(exchange_param_output), INTENT(INOUT) :: td_ncfile
@@ -522,7 +533,7 @@ CONTAINS
   END SUBROUTINE ncEPOpen
 
   !> \brief Reads the general attributes of the netcdf file
-  !! \param[in, out] td_ncfile data structure associated with the exchange_param netcdf file
+  !! @param [in, out] td_ncfile data structure associated with the exchange_param netcdf file
   !! eep that give general parameters for make_fileName is overwritten, use it cautiously
   !<
   SUBROUTINE read_general_ep_att(td_ncfile)
@@ -558,16 +569,17 @@ CONTAINS
   END SUBROUTINE read_general_ep_att
 
   !> \brief Reads the attributes of the netcdf file and initialize (dynamic allocation) the exchange_param data structure
-  !! \param[in, out] td_ncfile data structure associated with the exchange_param netcdf file
-  !! \param[in] td_ep exchange parameter data structure
+  !! @param [in, out] td_ncfile data structure associated with the exchange_param netcdf file
+  !! @param [in] td_ep exchange parameter data structure
   !! td_ep is overwritten, and the global data structure, use it cautiously.
   !<
   SUBROUTINE read_ep_att( td_ncfile, td_ep )
     type(exchange_param_output), INTENT(INOUT) :: td_ncfile
     TYPE(exchange_param), INTENT(INOUT) :: td_ep
     !local variables
-    INTEGER :: il_simul_diverged, il_from_previous, il_first_simul, il_run_from_ctl, il_save_pdata
-    !,& il_useGD, il_amplitude, il_location, il_sigma
+    INTEGER :: il_simul_diverged, il_from_previous, il_first_simul&
+    , il_run_from_ctl, il_save_pdata, il_useGD
+    !, il_amplitude, il_location, il_sigma
 
     CALL debug("  In read_ep_att, reading attributes", tag=dNETCDF)
     CALL set_B_matrix_status(td_ep, td_ncfile%l_B_matrix)
@@ -605,11 +617,13 @@ CONTAINS
 !     CALL chkerr( nf90_get_att( td_ncfile%ncid, NF90_GLOBAL, tm_epAtt%r_sigma , td_ep%r_sigma ) )
 !     CALL chkerr( nf90_get_att( td_ncfile%ncid, NF90_GLOBAL, tm_epAtt%r_v0 , td_ep%r_v0 ) )
 !     CALL chkerr( nf90_get_att( td_ncfile%ncid, NF90_GLOBAL, tm_epAtt%r_omega , td_ep%r_omega ) )
-!     CALL chkerr( nf90_get_att( td_ncfile%ncid, NF90_GLOBAL, tm_epAtt%l_useGD , il_useGD ) )
-!     td_ep%l_useGD = int2l(il_useGD)
-!     CALL chkerr( nf90_get_att( td_ncfile%ncid, NF90_GLOBAL, tm_epAtt%r_wGD , td_ep%r_wGD ) )
-!     CALL chkerr( nf90_get_att( td_ncfile%ncid, NF90_GLOBAL, tm_epAtt%r_wb , td_ep%r_wb ) )
-!     CALL chkerr( nf90_get_att( td_ncfile%ncid, NF90_GLOBAL, tm_epAtt%r_wGrad , td_ep%r_wGrad ) )
+    ! ! the regularization parameters where removed at some point
+    ! ! there might be NetCDF error if reading those from some old files
+    CALL chkerr( nf90_get_att( td_ncfile%ncid, NF90_GLOBAL, tm_epAtt%l_useGD , il_useGD ) )
+    td_ep%l_useGD = int2l(il_useGD)
+    CALL chkerr( nf90_get_att( td_ncfile%ncid, NF90_GLOBAL, tm_epAtt%r_wb , td_ep%r_wb ) )
+    CALL chkerr( nf90_get_att( td_ncfile%ncid, NF90_GLOBAL, tm_epAtt%r_wGrad , td_ep%r_wGrad ) )
+    !     CALL chkerr( nf90_get_att( td_ncfile%ncid, NF90_GLOBAL, tm_epAtt%r_wGD , td_ep%r_wGD ) )
 !     CALL chkerr( nf90_get_att( td_ncfile%ncid, NF90_GLOBAL, tm_epAtt%l_amplitude , il_amplitude ) )
 !     CALL chkerr( nf90_get_att( td_ncfile%ncid, NF90_GLOBAL, tm_epAtt%l_location  , il_location ) )
 !     CALL chkerr( nf90_get_att( td_ncfile%ncid, NF90_GLOBAL, tm_epAtt%l_sigma     , il_sigma ) )
@@ -689,11 +703,12 @@ CONTAINS
   END SUBROUTINE ncEPCreate
 
   SUBROUTINE save_ep_att( td_ncfile, td_ep )
-    !sauvegarde des attributs (param�tres) de la trajectoire
+    !sauvegarde des attributs (param?(I?=(Btres) de la trajectoire
     type(exchange_param_output), INTENT(IN) :: td_ncfile
     TYPE(exchange_param), INTENT(IN) :: td_ep
-    INTEGER :: il_simul_diverged, il_from_previous, il_first_simul, il_run_from_ctl, il_save_pdata, il_B_matrix
-    !,&il_useGD, il_amplitude, il_location, il_sigma
+    INTEGER :: il_simul_diverged, il_from_previous, il_first_simul&
+    , il_run_from_ctl, il_save_pdata, il_B_matrix, il_useGD
+    !, il_amplitude, il_location, il_sigma
 
     CALL debug("  Saving attributes", tag=dNETCDF)
     CALL chkerr( nf90_put_att( td_ncfile%ncid, NF90_GLOBAL, tm_epAtt%aa_title   , td_ncfile%aa_title   ) )
@@ -746,11 +761,13 @@ CONTAINS
 !     CALL chkerr( nf90_put_att( td_ncfile%ncid, NF90_GLOBAL, tm_epAtt%r_sigma , td_ep%r_sigma ) )
 !     CALL chkerr( nf90_put_att( td_ncfile%ncid, NF90_GLOBAL, tm_epAtt%r_v0 , td_ep%r_v0 ) )
 !     CALL chkerr( nf90_put_att( td_ncfile%ncid, NF90_GLOBAL, tm_epAtt%r_omega , td_ep%r_omega ) )
-!     il_useGD = INT(td_ep%l_useGD)
-!     CALL chkerr( nf90_put_att( td_ncfile%ncid, NF90_GLOBAL, tm_epAtt%l_useGD , il_useGD ) )
+
+    il_useGD = INT(td_ep%l_useGD)
+    CALL chkerr( nf90_put_att( td_ncfile%ncid, NF90_GLOBAL, tm_epAtt%l_useGD , il_useGD ) )
+    CALL chkerr( nf90_put_att( td_ncfile%ncid, NF90_GLOBAL, tm_epAtt%r_wb , td_ep%r_wb ) )
+    CALL chkerr( nf90_put_att( td_ncfile%ncid, NF90_GLOBAL, tm_epAtt%r_wGrad , td_ep%r_wGrad ) )
+
 !     CALL chkerr( nf90_put_att( td_ncfile%ncid, NF90_GLOBAL, tm_epAtt%r_wGD , td_ep%r_wGD ) )
-!     CALL chkerr( nf90_put_att( td_ncfile%ncid, NF90_GLOBAL, tm_epAtt%r_wb , td_ep%r_wb ) )
-!     CALL chkerr( nf90_put_att( td_ncfile%ncid, NF90_GLOBAL, tm_epAtt%r_wGrad , td_ep%r_wGrad ) )
 !     il_amplitude = INT(td_ep%l_amplitude)
 !     il_location  = INT(td_ep%l_location)
 !     il_sigma     = INT(td_ep%l_sigma)
@@ -779,7 +796,7 @@ CONTAINS
   END SUBROUTINE save_ep_att
 
   !> \brief Gets the size of the preconditionned control vector
-  !! \param[in] td_ep exchange parameter structure
+  !! @param [in] td_ep exchange parameter structure
   !<
   FUNCTION get_pctlSize(td_ep) RESULT(il_npctl)
     TYPE(exchange_param), INTENT(IN) :: td_ep
@@ -789,7 +806,7 @@ CONTAINS
   END FUNCTION get_pctlSize
 
   !> \brief Gets the size of the control vector
-  !! \param[in] td_ep exchange parameter structure
+  !! @param [in] td_ep exchange parameter structure
   !<
   FUNCTION get_ctlSize(td_ep) RESULT(il_nctl)
     TYPE(exchange_param), INTENT(IN) :: td_ep
@@ -799,7 +816,7 @@ CONTAINS
   END FUNCTION get_ctlSize
 
   !> \brief (deprecated) Gets the input directory
-  !! \param[in] td_ep exchange parameter structure
+  !! @param [in] td_ep exchange parameter structure
   !<
   FUNCTION get_input_dir(td_ep) RESULT(ala_dir)
     TYPE(exchange_param), INTENT(IN) :: td_ep
@@ -810,7 +827,7 @@ CONTAINS
   END FUNCTION get_input_dir
 
   !> \brief Returns the number of elements of the control vector that are out of bounds
-  !! \param[in] td_ep exchange parameter
+  !! @param [in] td_ep exchange parameter
   !<
   FUNCTION get_nb_outOfBound(td_ep) RESULT(il_nb_outOfBound)
     TYPE(exchange_param), INTENT(IN) :: td_ep
@@ -823,7 +840,7 @@ CONTAINS
   END FUNCTION get_nb_outOfBound
 
   !> \brief Gets the fields l_B_matrix
-  !! \param[in] td_ep exchange parameter
+  !! @param [in] td_ep exchange parameter
   !<
   FUNCTION get_B_matrix_status(td_ep)RESULT(ll_status)
     TYPE(exchange_param), INTENT(IN) :: td_ep
@@ -834,8 +851,8 @@ CONTAINS
   END FUNCTION get_B_matrix_status
 
   !> \brief Sets the fields l_B_matrix
-  !! \param[in, out] td_ep exchange parameter
-  !! \param[in] ld_status (logical) status of B
+  !! @param [in, out] td_ep exchange parameter
+  !! @param [in] ld_status (logical) status of B
   !! .TRUE. is B is stored as a full matrix
   !! .FALSE. is B is a diagonal matrix and stored as a vector
   !<
@@ -866,7 +883,7 @@ CONTAINS
   ENDSUBROUTINE set_B_matrix_status
 
   !> \brief Gets the dimensionality of the control vector in the physical space; Useful when the CTL is a discretization of a function
-  !! \param[in] td_ep exchange parameter
+  !! @param [in] td_ep exchange parameter
   !<
   FUNCTION get_ctl_dim(td_ep)RESULT(il_dim)
     TYPE(exchange_param), INTENT(IN) :: td_ep
@@ -877,10 +894,10 @@ CONTAINS
   END FUNCTION get_ctl_dim
 
   !> \brief Resizes the array variables, control parameters
-  !! \param[in, out] td_ep exchange parameter
-  !! \param[in] nctl size of the control vector
-  !! \param[in] ndim number of physical dimensions of the control vector. The default value 1 is assumed.
-  !! \param[in] npctl size of the preconditionned CTL, when nctl is zero, npctl is automatically set to zero
+  !! @param [in, out] td_ep exchange parameter
+  !! @param [in] nctl size of the control vector
+  !! @param [in] ndim number of physical dimensions of the control vector. The default value 1 is assumed.
+  !! @param [in] npctl size of the preconditionned CTL, when nctl is zero, npctl is automatically set to zero
   !! \details  this procedure set the boolean parameters to .FALSE., covariance to identity, gradien to -999 and other fields to 0. id_ndim must be greater than zero if id_nctl>0. If the control vector is a set independant parameters, id_ndim mus be 1.
   !<
   SUBROUTINE set_ctlsize( td_ep, nctl, ndim, npctl )
@@ -940,8 +957,8 @@ CONTAINS
   END SUBROUTINE set_ctlsize
 
   !> \brief Resizes the array variables related to the preconditionned CTL
-  !! \param[in, out] td_ep exchange parameter
-  !! \param[in] npctl size of the change control variable
+  !! @param [in, out] td_ep exchange parameter
+  !! @param [in] npctl size of the change control variable
   !! \details this procedure set the gradient to -999 and the changed CTL to 0.
   !<
   SUBROUTINE set_pctlsize(td_ep, npctl)
@@ -954,19 +971,14 @@ CONTAINS
     END IF
     CALL debug(npctl, "In set_pctlsize; ===========, npctl = ",tag=dTRACE)
 
-    IF(td_ep%i_npctl /= npctl)THEN
-      IF(td_ep%i_npctl>0)THEN
+    IF( (td_ep%i_npctl /= npctl).and.(td_ep%i_npctl>0) )THEN
         DEALLOCATE(td_ep%ra_pctl, td_ep%ra_grad)
-      END IF
-      IF(npctl>0)THEN
-        ALLOCATE( td_ep%ra_pctl(npctl), td_ep%ra_grad(npctl) )
-      END IF
     END IF
 
     IF(npctl>0)THEN
-      ALLOCATE( td_ep%ra_pctl(npctl), td_ep%ra_grad(npctl) )
-      td_ep%ra_pctl = 0.0_cp
-      td_ep%ra_grad  = -999.0_cp
+        ALLOCATE( td_ep%ra_pctl(npctl), td_ep%ra_grad(npctl) )
+        td_ep%ra_pctl = 0.0_cp
+        td_ep%ra_grad  = -999.0_cp
     END IF
 
     td_ep%i_npctl = npctl
@@ -998,9 +1010,9 @@ CONTAINS
   END SUBROUTINE set_default_ctl_param
 
   !> \brief Read exchange parameters between the solver and the minimization driver
-  !! \param[in, out] td_ep exchange parameter, contains the name of the file as input
+  !! @param [in, out] td_ep exchange parameter, contains the name of the file as input
   !!     and the read params as output
-  !! \param[in] td_ncfile Data structure used to manipulate the exchange parameter file
+  !! @param [in] td_ncfile Data structure used to manipulate the exchange parameter file
   !! \details the file is supposed to be opened and the associated identifier store in the variable id_fileId;
   !<
   SUBROUTINE read_ep_internal(td_ep, td_ncfile)
@@ -1019,9 +1031,9 @@ CONTAINS
   END SUBROUTINE read_ep_internal
 
   !> \brief Write exchange parameters between the solver and the minimization driver
-  !! \param[in, out] td_ep exchange parameter, contains the name of the file as input
+  !! @param [in, out] td_ep exchange parameter, contains the name of the file as input
   !!  and the read params as output
-  !! \param[in] td_ncfile Data structure used to manipulate the exchange parameter file
+  !! @param [in] td_ncfile Data structure used to manipulate the exchange parameter file
   !! \details the file is supposed to be opened and the associated identifier store in the variable id_fileId;
   !<
   SUBROUTINE write_ep_internal(td_ep, td_ncfile)
@@ -1034,8 +1046,8 @@ CONTAINS
   END SUBROUTINE write_ep_internal
 
   !> \brief Internal subroutine to read the simulation state
-  !! \param[in, out] td_ep exchange parameter
-  !! \param[in] td_ncfile Data structure used to manipulate the exchange parameter file
+  !! @param [in, out] td_ep exchange parameter
+  !! @param [in] td_ncfile Data structure used to manipulate the exchange parameter file
   !<
   SUBROUTINE read_simulStatus_internal(td_ep, td_ncfile)
     TYPE(exchange_param), INTENT(INOUT)     :: td_ep
@@ -1048,8 +1060,8 @@ CONTAINS
   END SUBROUTINE read_simulStatus_internal
 
   !> \brief Internal subroutine to read the ctl size, this subroutine allocates space for dynamic fields
-  !! \param[in, out] td_ep exchange parameter
-  !! \param[in] td_ncfile Data structure used to manipulate the exchange parameter file
+  !! @param [in, out] td_ep exchange parameter
+  !! @param [in] td_ncfile Data structure used to manipulate the exchange parameter file
   !<
   SUBROUTINE read_ctl_size_internal(td_ep, td_ncfile)
     TYPE(exchange_param), INTENT(INOUT)     :: td_ep
@@ -1059,8 +1071,8 @@ CONTAINS
   END SUBROUTINE read_ctl_size_internal
 
   !>\brief Internal subroutine to read the cost function between the solver and the minimization driver
-  !! \param[in, out] td_ep exchange parameter
-  !! \param[in] td_ncfile Data structure used to manipulate the exchange parameter file
+  !! @param [in, out] td_ep exchange parameter
+  !! @param [in] td_ncfile Data structure used to manipulate the exchange parameter file
   !!\details the file is supposed to be opened and the associated identifier store in the variable id_fileId; The pointer fields in td_ep are supposed to be associated and the allocatable fields allocated
   !<
   SUBROUTINE read_cost_internal(td_ep, td_ncfile)
@@ -1071,8 +1083,8 @@ CONTAINS
   END SUBROUTINE read_cost_internal
 
   !>\brief Internal subroutine to read coordinates data
-  !! \param[in, out] td_ep exchange parameter
-  !! \param[in] td_ncfile data structure containing the file id and the variable id
+  !! @param [in, out] td_ep exchange parameter
+  !! @param [in] td_ncfile data structure containing the file id and the variable id
   !!\details the file is supposed to be openned; the pointer fields in td_ep are supposed to be associated and the allocatable fields allocated
   !<
   SUBROUTINE read_coord_internal(td_ep, td_ncfile)
@@ -1083,8 +1095,8 @@ CONTAINS
   END SUBROUTINE read_coord_internal
 
   !>\brief Internal subroutine to read the gradient of the cost function between the solver and the minimization driver
-  !! \param[in, out] td_ep exchange parameter
-  !! \param[in] td_ncfile Data structure used to manipulate the exchange parameter file
+  !! @param [in, out] td_ep exchange parameter
+  !! @param [in] td_ncfile Data structure used to manipulate the exchange parameter file
   !!\details the file is supposed to be opened and the associated identifier store in the variable id_fileId; The pointer fields in td_ep are supposed to be associated and the allocatable fields allocated
   !<
   SUBROUTINE read_grad_internal(td_ep, td_ncfile)
@@ -1095,8 +1107,8 @@ CONTAINS
   END SUBROUTINE read_grad_internal
 
   !>\brief Internal subroutine to read ctl data
-  !! \param[in, out] td_ep exchange parameter
-  !! \param[in] td_ncfile Data structure used to manipulate the exchange parameter file
+  !! @param [in, out] td_ep exchange parameter
+  !! @param [in] td_ncfile Data structure used to manipulate the exchange parameter file
   !!\details the file is supposed to be opened and the associated identifier store in the variable id_fileId; The pointer fields in td_ep are supposed to be associated and the allocatable fields allocated
   !! this routine set the background and zeroe the increment
   !<
@@ -1110,8 +1122,8 @@ CONTAINS
   END SUBROUTINE read_ctl_internal
 
   !>\brief Internal subroutine to read ctl data (ctl increment or delta ctl)
-  !! \param[in, out] td_ep exchange parameter
-  !! \param[in] td_ncfile Data structure used to manipulate the exchange parameter file
+  !! @param [in, out] td_ep exchange parameter
+  !! @param [in] td_ncfile Data structure used to manipulate the exchange parameter file
   !!\details the file is supposed to be opened and the associated identifier store in the variable id_fileId; The pointer fields in td_ep are supposed to be associated and the allocatable fields allocated
   !! the true CTL is obtained by addind the background and the increment
   !<
@@ -1123,8 +1135,8 @@ CONTAINS
   END SUBROUTINE read_dctl_internal
 
   !>\brief Internal subroutine to read the preconditionned ctl data (preconditionned ctl increment)
-  !! \param[in, out] td_ep exchange parameter
-  !! \param[in] td_ncfile Data structure used to manipulate the exchange parameter file
+  !! @param [in, out] td_ep exchange parameter
+  !! @param [in] td_ncfile Data structure used to manipulate the exchange parameter file
   !!\details the file is supposed to be opened and the associated identifier store in the variable id_fileId; The pointer fields in td_ep are supposed to be associated and the allocatable fields allocated
   !! the true CTL is obtained by addind the background and the increment
   !<
@@ -1136,9 +1148,24 @@ CONTAINS
       td_ep%ra_pctl = 0.0_cp
   END SUBROUTINE read_pctl_internal
 
+!   !>\brief Internal subroutine to read the tangent linear of the preconditionned ctl data (preconditionned ctl increment)
+!   !! @param [in, out] td_ep exchange parameter
+!   !! @param [in] td_ncfile Data structure used to manipulate the exchange parameter file
+!   !!@details the file is supposed to be opened and the associated
+!   !! identifier store in the variable id_fileId; The pointer fields
+!   !! in td_ep are supposed to be associated and the allocatable fields allocated
+!   !<
+!   SUBROUTINE read_pctlf_internal(td_ep, td_ncfile)
+!     TYPE(exchange_param), INTENT(INOUT)     :: td_ep
+!     type(exchange_param_output), INTENT(IN) :: td_ncfile
+!
+!     IF( nf90_get_var( td_ncfile%ncid, td_ncfile%ra_pctlfid, td_ep%ra_pctlf )/=NF90_NOERR)&
+!       td_ep%ra_pctlf = 0.0_cp
+!   END SUBROUTINE read_pctlf_internal
+
   !>\brief Internal subroutine to read backgroung ctl data and associated informations
-  !! \param[in, out] td_ep exchange parameter
-  !! \param[in] td_ncfile Data structure used to manipulate the exchange parameter file
+  !! @param [in, out] td_ep exchange parameter
+  !! @param [in] td_ncfile Data structure used to manipulate the exchange parameter file
   !!\details the file is supposed to be opened and the associated identifier store in the variable id_fileId; the pointer fields in td_ep are supposed to be associated and the allocatable fields allocated
   !<
   SUBROUTINE read_bctl_internal(td_ep, td_ncfile)
@@ -1159,8 +1186,8 @@ CONTAINS
   END SUBROUTINE read_bctl_internal
 
   !>\brief Internal subroutine to read ctl bounds and associated informations
-  !! \param[in, out] td_ep exchange parameter
-  !! \param[in] td_ncfile Data structure used to manipulate the exchange parameter file
+  !! @param [in, out] td_ep exchange parameter
+  !! @param [in] td_ncfile Data structure used to manipulate the exchange parameter file
   !!\details the file is supposed to be opened and the associated identifier store in the variable id_fileId; The pointer fields in td_ep are supposed to be associated and the allocatable fields allocated
   !<
   SUBROUTINE read_ctl_bound_internal(td_ep, td_ncfile)
@@ -1182,8 +1209,8 @@ CONTAINS
   END SUBROUTINE read_ctl_bound_internal
 
   !>\brief Internal subroutine to read all the ctl informations
-  !! \param[in, out] td_ep exchange parameter
-  !! \param[in] td_ncfile Data structure used to manipulate the exchange parameter file
+  !! @param [in, out] td_ep exchange parameter
+  !! @param [in] td_ncfile Data structure used to manipulate the exchange parameter file
   !!\details the file is supposed to be opened and the associated identifier store in the variable id_fileId; The pointer fields in td_ep are supposed to be associated and the allocatable fields allocated
   !<
   SUBROUTINE read_ctl_all_internal(td_ep, td_ncfile)
@@ -1198,8 +1225,8 @@ CONTAINS
 
 
   !> \brief Internal routine to write the simultaneous parameter
-  !! \param[in, out] td_ep exchange parameter
-  !! \param[in] td_ncfile Data structure used to manipulate the exchange parameter file
+  !! @param [in, out] td_ep exchange parameter
+  !! @param [in] td_ncfile Data structure used to manipulate the exchange parameter file
   SUBROUTINE write_simulStatus_internal(td_ep, td_ncfile)
     TYPE(exchange_param), INTENT(IN)        :: td_ep
     type(exchange_param_output), INTENT(IN) :: td_ncfile
@@ -1210,8 +1237,8 @@ CONTAINS
   END SUBROUTINE write_simulStatus_internal
 
   !> \brief Internal routine to write the cost function between the solver and the minimization driver
-  !! \param[in, out] td_ep exchange parameter
-  !! \param[in] td_ncfile Data structure used to manipulate the exchange parameter file
+  !! @param [in, out] td_ep exchange parameter
+  !! @param [in] td_ncfile Data structure used to manipulate the exchange parameter file
   !!\details the file is supposed to be opened and the associated identifier store in the variable id_fileId; The pointer fields in td_ep are supposed to be associated and the allocatable fields allocated
   !<
   SUBROUTINE write_cost_internal(td_ep, td_ncfile)
@@ -1222,8 +1249,8 @@ CONTAINS
   END SUBROUTINE write_cost_internal
 
   !> \brief Writes the coordinates
-  !! \param[in, out] td_ep exchange parameter
-  !! \param[in] td_ncfile Data structure used to manipulate the exchange parameter file
+  !! @param [in, out] td_ep exchange parameter
+  !! @param [in] td_ncfile Data structure used to manipulate the exchange parameter file
   !<
   SUBROUTINE write_coord_internal(td_ep, td_ncfile)
     TYPE(exchange_param), INTENT(IN)        :: td_ep
@@ -1233,8 +1260,8 @@ CONTAINS
   END SUBROUTINE write_coord_internal
 
   !> \brief Writes the gradient of the cost function between the solver and the minimization driver
-  !! \param[in, out] td_ep exchange parameter
-  !! \param[in] td_ncfile Data structure used to manipulate the exchange parameter file
+  !! @param [in, out] td_ep exchange parameter
+  !! @param [in] td_ncfile Data structure used to manipulate the exchange parameter file
   !<
   SUBROUTINE write_grad_internal(td_ep, td_ncfile)
     TYPE(exchange_param), INTENT(IN)        :: td_ep
@@ -1244,8 +1271,8 @@ CONTAINS
   END SUBROUTINE write_grad_internal
 
   !>\brief Internal subroutine to write ctl data
-  !! \param[in, out] td_ep exchange parameter
-  !! \param[in] td_ncfile Data structure used to manipulate the exchange parameter file
+  !! @param [in, out] td_ep exchange parameter
+  !! @param [in] td_ncfile Data structure used to manipulate the exchange parameter file
   !! \details the file is supposed to be opened and the associated identifier store in the variable id_fileId; The pointer fields in td_ep are supposed to be associated and the allocatable fields allocated
   !<
   SUBROUTINE write_ctl_internal(td_ep, td_ncfile)
@@ -1264,8 +1291,8 @@ CONTAINS
   END SUBROUTINE write_ctl_internal
 
   !>\brief Internal subroutine to write backgroung ctl data and associated informations
-  !! \param[in, out] td_ep exchange parameter
-  !! \param[in] td_ncfile Data structure used to manipulate the exchange parameter file
+  !! @param [in, out] td_ep exchange parameter
+  !! @param [in] td_ncfile Data structure used to manipulate the exchange parameter file
   !!\details the file is supposed to be opened and the associated identifier store in the variable id_fileId; The pointer fields in td_ep are supposed to be associated and the allocatable fields allocated
   !<
   SUBROUTINE write_bctl_internal(td_ep, td_ncfile)
@@ -1282,8 +1309,8 @@ CONTAINS
   END SUBROUTINE write_bctl_internal
 
   !>\brief Internal subroutine to write the increment of ctl data
-  !! \param[in, out] td_ep exchange parameter
-  !! \param[in] td_ncfile Data structure used to manipulate the exchange parameter file
+  !! @param [in, out] td_ep exchange parameter
+  !! @param [in] td_ncfile Data structure used to manipulate the exchange parameter file
   !!\details the file is supposed to be opened and the associated identifier store in the variable id_fileId; The pointer fields in td_ep are supposed to be associated and the allocatable fields allocated
   !<
   SUBROUTINE write_dctl_internal(td_ep, td_ncfile)
@@ -1294,8 +1321,8 @@ CONTAINS
   END SUBROUTINE write_dctl_internal
 
   !>\brief Internal subroutine to write the preconditionned increment of the  ctl data
-  !! \param[in, out] td_ep exchange parameter
-  !! \param[in] td_ncfile Data structure used to manipulate the exchange parameter file
+  !! @param [in, out] td_ep exchange parameter
+  !! @param [in] td_ncfile Data structure used to manipulate the exchange parameter file
   !!\details the file is supposed to be opened and the associated identifier store in the variable id_fileId; The pointer fields in td_ep are supposed to be associated and the allocatable fields allocated
   !<
   SUBROUTINE write_pctl_internal(td_ep, td_ncfile)
@@ -1305,9 +1332,21 @@ CONTAINS
     CALL chkerr( nf90_put_var( td_ncfile%ncid, td_ncfile%ra_pctlid, td_ep%ra_pctl ) )
   END SUBROUTINE write_pctl_internal
 
+!   !>\brief Internal subroutine to write the tangent linear preconditionned increment of the  ctl data
+!   !! @param [in, out] td_ep exchange parameter
+!   !! @param [in] td_ncfile Data structure used to manipulate the exchange parameter file
+!   !!\details the file is supposed to be opened and the associated identifier store in the variable id_fileId; The pointer fields in td_ep are supposed to be associated and the allocatable fields allocated
+!   !<
+!   SUBROUTINE write_pctlf_internal(td_ep, td_ncfile)
+!     TYPE(exchange_param), INTENT(IN)        :: td_ep
+!     type(exchange_param_output), INTENT(IN) :: td_ncfile
+!
+!     CALL chkerr( nf90_put_var( td_ncfile%ncid, td_ncfile%ra_pctlfid, td_ep%ra_pctlf ) )
+!   END SUBROUTINE write_pctlf_internal
+
   !>\brief Internal subroutine to write ctl bounds and associated informations
-  !! \param[in, out] td_ep exchange parameter
-  !! \param[in] td_ncfile Data structure used to manipulate the exchange parameter file
+  !! @param [in, out] td_ep exchange parameter
+  !! @param [in] td_ncfile Data structure used to manipulate the exchange parameter file
   !!\details the file is supposed to be opened and the associated identifier store in the variable id_fileId; The pointer fields in td_ep are supposed to be associated and the allocatable fields allocated
   !<
   SUBROUTINE write_ctl_bound_internal(td_ep, td_ncfile)
@@ -1329,8 +1368,8 @@ CONTAINS
   END SUBROUTINE write_ctl_bound_internal
 
   !>\brief Internal subroutine to write all the ctl informations
-  !! \param[in, out] td_ep exchange parameter
-  !! \param[in] td_ncfile Data structure used to manipulate the exchange parameter file
+  !! @param [in, out] td_ep exchange parameter
+  !! @param [in] td_ncfile Data structure used to manipulate the exchange parameter file
   !!\details the file is supposed to be opened and the associated identifier store in the variable id_fileId; The pointer fields in td_ep are supposed to be associated and the allocatable fields allocated
   !<
   SUBROUTINE write_ctl_all_internal(td_ep, td_ncfile)
@@ -1344,8 +1383,8 @@ CONTAINS
   END SUBROUTINE write_ctl_all_internal
 
   !> \brief Reads the ctl size from the given file and allocates space for dynamic fields
-  !! \param[in] td_ep exchange parameter structure
-  !! \param[in] ada_fName file name
+  !! @param [in] td_ep exchange parameter structure
+  !! @param [in] ada_fName file name
   !<
   SUBROUTINE read_ctl_size(td_ep, ada_fName)
     TYPE(exchange_param), INTENT(INOUT) :: td_ep
@@ -1359,12 +1398,15 @@ CONTAINS
   END SUBROUTINE read_ctl_size
 
   !> \brief Reads exchange parameter data to file
-  !! \param[in] td_ep exchange parameter structure
-  !! \param[in] id_dType data type (CTL_DATA, )
-  !! \param[in] id_status file status (input, or runtime)
-  !! \param[in] from (optional) data type to be considered when using automatic filename
+  !! @param [in] td_ep exchange parameter structure
+  !! @param [in] id_dType data type (CTL_DATA, )
+  !! @param [in] id_status file status (input, or runtime)
+  !! @param [in] from (optional) data type to be considered when using automatic filename
   !! \details the status information is used to choose the input directory
-  !! When from is present, the file name is built using from instead of id_dType, this allow the user to read few data from a file that contains more. for exemple reading only the ctl from a file that contains all ep data. It is mainly using when reading the ctl size, as it can be read from any file
+  !! When from is present, the file name is built using from instead of id_dType,
+  !!  this allow the user to read few data from a file that contains more. for
+  !!  exemple reading only the ctl from a file that contains all ep data. It is
+  !!  mainly using when reading the ctl size, as it can be read from any file
   !<
   SUBROUTINE read_ep_data(td_ep, id_dType, id_status, from)
     TYPE(exchange_param), INTENT(INOUT) :: td_ep
@@ -1372,7 +1414,7 @@ CONTAINS
     INTEGER, OPTIONAL, INTENT(IN) :: from
     !local variables
     type(exchange_param_output) :: tl_ncfile
-    CHARACTER(LEN=ip_snl) :: ala_fName
+    CHARACTER(LEN=ip_fnl) :: ala_fName
     INTEGER il_from
 
     IF ( PRESENT(from) ) THEN
@@ -1428,15 +1470,19 @@ CONTAINS
   END SUBROUTINE read_ep_data
 
   !> \brief Writes exchange parameter data to file
-  !! \param[in] td_ep exchange parameter structure
-  !! \param[in] id_dType data type (CTL_DATA, )
-  !! \param[in] id_status file status (output, or runtime)
-  !! \param[in] ada_text text description of the action that created the information to be saved
-  !! \param[in] as (optional) as type under which the data are actually saved
-  !! \param[in] prefix (optional) prefix of the filename
+  !! @param [in] td_ep exchange parameter structure
+  !! @param [in] id_dType data type (CTL_DATA, )
+  !! @param [in] id_status file status (output, or runtime)
+  !! @param [in] ada_text text description of the action that created the
+  !!   information to be saved
+  !! @param [in] as (optional) as type under which the data are actually saved
+  !! @param [in] prefix (optional) prefix of the filename
   !! \details the status information is used to choose the output directory
   !! the size of the control vector is automatically saved
-  !! the parameter as affect only the file name, it makes it possible to save data in a file with the name associated with as instead of id_dType. For exemple, CTL_ALL_DATA, EP_DATA can be saved as CTL or BCTL, this is usefull for restart. It is up to the user to use this parameter only if necessary.
+  !! the parameter as affect only the file name, it makes it possible to save
+  !! data in a file with the name associated with as instead of id_dType. For
+  !! exemple, CTL_ALL_DATA, EP_DATA can be saved as CTL or BCTL, this is usefull
+  !! for restart. It is up to the user to use this parameter only if necessary.
   !<
   SUBROUTINE write_ep_data(td_ep, id_dType, id_status, ada_text, as, prefix)
     TYPE(exchange_param), INTENT(IN) :: td_ep
@@ -1509,8 +1555,8 @@ CONTAINS
 
   END SUBROUTINE write_ep_data
 
-  !> \brief Print the control vector and its bounds
-  !! \param[in] td_ep exchange parameter
+  !> @brief Print the control vector and its bounds
+  !! @param [in] td_ep exchange parameter
   !<
   SUBROUTINE print_ctl_bound(td_ep)
     TYPE(exchange_param), INTENT(IN) :: td_ep
@@ -1536,8 +1582,8 @@ CONTAINS
     WRITE(*,*)"--------------------------------------------"
   END SUBROUTINE print_ctl_bound
 
-  !>\brief print exchange parameters for diagnostics
-  !! \param[in] td_ep exchange parameters
+  !> @brief print exchange parameters for diagnostics
+  !! @param [in] td_ep exchange parameters
   !<
   SUBROUTINE print_ep(td_ep)
     TYPE(exchange_param), INTENT(IN) :: td_ep
@@ -1560,10 +1606,10 @@ CONTAINS
 !     CALL debug(td_ep%r_v0          , '  Vvelocity parameter    (v0)    = ',tag=dALLWAYS)
 !     CALL debug(td_ep%r_omega       , '  Velocity oscillation  (omega)  = ',tag=dALLWAYS)
 
-!     CALL debug(td_ep%l_useGD       , '  Use GD projection?             = ',tag=dALLWAYS)
+    CALL debug(td_ep%l_useGD       , '  Use GD projection?             = ',tag=dALLWAYS)
 !     CALL debug(td_ep%r_wGD         , '  GD weight                      = ',tag=dALLWAYS)
-!     CALL debug(td_ep%r_wb          , '  Weighting param for the bg     = ',tag=dALLWAYS)
-!     CALL debug(td_ep%r_wGrad       , '  Weighting param for grad regul = ',tag=dALLWAYS)
+    CALL debug(td_ep%r_wb          , '  Weighting param for the bg     = ',tag=dALLWAYS)
+    CALL debug(td_ep%r_wGrad       , '  Weighting param for grad regul = ',tag=dALLWAYS)
 
 !     CALL debug(td_ep%r_sigmaB      , '  bg standard deviation(sigmaB)  = ',tag=dALLWAYS)
 !     CALL debug(td_ep%l_amplitude   , '  Bell shape amplitude (amplitu) = ',tag=dALLWAYS)
@@ -1601,7 +1647,7 @@ CONTAINS
   !
 
   !> \brief read observations from file
-  !! \param[in, out] td_os observation structure,
+  !! @param [in, out] td_os observation structure,
   !! contains the name of the file and the dimension (type) of the problem as input and the read params as output
   !<
   SUBROUTINE read_obs(td_os)
@@ -1626,7 +1672,7 @@ CONTAINS
   END SUBROUTINE read_obs
 
   !> \brief read obsgap from file
-  !! \param[in, out] td_os observation structure,
+  !! @param [in, out] td_os observation structure,
   !! contains the name of the file and the dimension (type) of the problem as input
   !! and the read params as output
   !<
@@ -1649,7 +1695,7 @@ CONTAINS
   END SUBROUTINE read_obsgap
 
 !   !> \brief write observations in the friendly-plot format
-!   !! \param[in] td_os, observation structure
+!   !! @param [in] td_os, observation structure
 !   !<
 !   SUBROUTINE write_obs_for_plot(td_os)
 !     TYPE(obs_structure), INTENT(INOUT) :: td_os
@@ -1672,8 +1718,8 @@ CONTAINS
 !   END SUBROUTINE write_obs_for_plot
 
   !> \brief write observations to file
-  !! \param[in, out] td_os observation structure
-  !! \param[in] ada_title stringg used as title (netcdf global parameter)
+  !! @param [in, out] td_os observation structure
+  !! @param [in] ada_title stringg used as title (netcdf global parameter)
   !<
   SUBROUTINE write_obs(td_os, ada_title)
     TYPE(obs_structure), INTENT(INOUT) :: td_os
@@ -1712,8 +1758,8 @@ CONTAINS
   END SUBROUTINE write_obs
 
   !> \brief write observations to file
-  !! \param[in, out] td_os observation structure
-  !! \param[in] ada_title stringg used as title (netcdf global parameter)
+  !! @param [in, out] td_os observation structure
+  !! @param [in] ada_title stringg used as title (netcdf global parameter)
   !<
   SUBROUTINE write_obsgap(td_os, ada_title)
     TYPE(obs_structure), INTENT(INOUT) :: td_os

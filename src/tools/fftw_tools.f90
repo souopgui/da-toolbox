@@ -1,5 +1,5 @@
 !> \file fftw_tools.f90
-!! \brief general tools for Fourier transform
+!! @brief general tools for Fourier transform
 !! @author Innocent Souopgui
 !! \details
 !!
@@ -30,7 +30,7 @@ IMPLICIT NONE
     !MODULE PROCEDURE ifftw_3d_r2r!> run 3D inverse transform
   END INTERFACE
 
-  !>\brief engine for 1D fftw transform
+  !>@brief engine for 1D fftw transform
   TYPE, PRIVATE :: fftw_1d_engine
     INTEGER :: i_size = -1 !> size of the transform supported by the engine
     INTEGER(C_INT) :: i_kind
@@ -51,14 +51,14 @@ IMPLICIT NONE
     tm_r2r_1d_beng   !> backward engine for r2r transform (HC2R)
 CONTAINS
 
-  !>\brief Initializes environment for fftw transform
-  !!\detail This routine does nothing. Only the associated routine finalize_fftw is usefull. For conformance, it should be used so that the use of finalize make logical sense
+  !>@brief Initializes environment for fftw transform
+  !!@details This routine does nothing. Only the associated routine finalize_fftw is usefull. For conformance, it should be used so that the use of finalize make logical sense
   !<
   SUBROUTINE init_fftw()
   END SUBROUTINE init_fftw
 
-  !>\brief Terminates the fftw environment
-  !!\detail This routine clean the environment: destroy plans and free dynamically allocated spaces for fftw transform
+  !>@brief Terminates the fftw environment
+  !!@details This routine clean the environment: destroy plans and free dynamically allocated spaces for fftw transform
   !<
   SUBROUTINE finalize_fftw()
     !reset engines for 1D fftw transform
@@ -66,11 +66,11 @@ CONTAINS
     CALL reset_fftw_1d_engine(tm_r2r_1d_beng)
   END SUBROUTINE finalize_fftw
 
-  !>\brief initialises engine for 1D fftw transform
-  !!\param[inout] td_eng Engine for fftw transform
-  !!\param[in] id_size size of the transform
-  !!\param[in] id_kind king of the transform
-  !!\param[in] id_flags flags for fftw plan
+  !>@brief initialises engine for 1D fftw transform
+  !!@param [in,out] td_eng Engine for fftw transform
+  !!@param [in] id_size size of the transform
+  !!@param [in] id_kind king of the transform
+  !!@param [in] id_flags flags for fftw plan
   !<
   SUBROUTINE init_fftw_1d_engine(td_eng, id_size, id_kind, id_flags)
     TYPE(fftw_1d_engine), INTENT(INOUT) :: td_eng
@@ -108,7 +108,7 @@ CONTAINS
     td_eng%i_flags= il_flags
   END SUBROUTINE init_fftw_1d_engine
 
-  !>\brief reset a 1D fftw transform engine
+  !>@brief reset a 1D fftw transform engine
   SUBROUTINE reset_fftw_1d_engine(td_eng)
     TYPE(fftw_1d_engine), INTENT(INOUT) :: td_eng
     IF(td_eng%i_size > 0)THEN
@@ -125,9 +125,9 @@ CONTAINS
     END IF
   END SUBROUTINE reset_fftw_1d_engine
 
-  !>\brief fftw direct r2r 1D transform
-  !! \param[in] rda_signal signal to be transform
-  !! \param[out] rda_fft_coef Fourier coefficient of the signal
+  !>@brief fftw direct r2r 1D transform
+  !! @param [in] rda_signal signal to be transform
+  !! @param [out] rda_fft_coef Fourier coefficient of the signal
   !<
   SUBROUTINE fftw_1d_r2r(rda_signal, rda_fft_coef)
     REAL(FFTW_REAL), DIMENSION(:), INTENT(IN)  :: rda_signal
@@ -144,9 +144,9 @@ CONTAINS
     rda_fft_coef = tm_r2r_1d_feng%ra_out/SQRT(tm_r2r_1d_feng%i_size*1.0_cp)
   END SUBROUTINE fftw_1d_r2r
 
-  !>\brief fftw inverse r2r 1D transform
-  !! \param[in] rda_fft_coef Fourier coefficient of the signal
-  !! \param[out] rda_signal computed signal
+  !>@brief fftw inverse r2r 1D transform
+  !! @param [in] rda_fft_coef Fourier coefficient of the signal
+  !! @param [out] rda_signal computed signal
   !<
   SUBROUTINE ifftw_1d_r2r(rda_fft_coef, rda_signal)
     REAL(FFTW_REAL), DIMENSION(:), INTENT(IN) :: rda_fft_coef

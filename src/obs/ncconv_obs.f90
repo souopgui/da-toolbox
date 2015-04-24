@@ -7,7 +7,7 @@ MODULE ncconv_obs
   USE nctools
   USE general_tools
   USE debug_tools
-  USE randmod
+  USE random
 IMPLICIT NONE
 
 
@@ -30,24 +30,24 @@ IMPLICIT NONE
     CHARACTER(LEN=ip_cnl) ::&
       r_date   = "t",&
       i_ts     = "timeStep",&
-      ra_obs    = "ra_obs",&
-      ra_sigma   = "ra_sigma",&
-      ra_Rm1    = "ra_Rm1",&
-      ra_obsgap   = "ra_obsgap"
+      ra_obs   = "ra_obs",&
+      ra_std   = "ra_sigma",&
+      ra_Rm1   = "ra_Rm1",&
+      ra_inn   = "ra_obsgap"
     CHARACTER(LEN=ip_cnl) ::&
       r_dateu  = "s",&
       i_tsu    = "N/A",&
-      ra_obsu   = "N/A",&
-      ra_sigmau  = "N/A",&
-      ra_Rm1u   = "N/A",&
-      ra_obsgapu  = "N/A"
+      ra_obsu  = "N/A",&
+      ra_stdu  = "N/A",&
+      ra_Rm1u  = "N/A",&
+      ra_innu  = "N/A"
     CHARACTER(LEN=ip_lnl) ::&
       r_dateln = "time",&
       i_tsln   = "time step ordinal number",&
-      ra_obsln  = "observation data",&
-      ra_sigmaln = "standard deviation of observation error",&
-      ra_Rm1ln  = "inverse covariance (diag matrix)",&
-      ra_obsgapln = "Diference between obs and model output"
+      ra_obsln = "observation data",&
+      ra_stdln = "standard deviation of observation error",&
+      ra_Rm1ln = "inverse covariance (diag matrix)",&
+      ra_innln = "Diference between obs and model output"
 
     !wavelet related variables
     CHARACTER(LEN=ip_cnl) :: i_obs_level = "Obs_level"
@@ -60,18 +60,21 @@ IMPLICIT NONE
     CHARACTER(LEN=ip_lnl) :: ra_dxln = "step between successive observation points"
 
     CHARACTER(LEN=ip_cnl) ::&
-      ia_icoord = "icoord",&
-      ra_rcoord   = "rcoord",&
+      ia_icoord  = "icoord",&
+      ra_rcoord  = "rcoord",&
+      ra_fidx    = "ra_fidx",&
       l_rcoord   = "l_rcoord",&
       l_icoord   = "l_icoord"
     CHARACTER(LEN=ip_cnl) ::&
       ia_icoordu = "N/A",&
-      ra_rcoordu  = "N/A",&
+      ra_rcoordu = "N/A",&
+      ra_fidxu   = "N/A",&
       l_rcoordu  = "N/A",&
       l_icoordu  = "l_icoord"
     CHARACTER(LEN=ip_lnl) ::&
       ia_icoordln = "Integer coordinates, indices in the discretization grid",&
       ra_rcoordln = "real coordinates in the computation domain",&
+      ra_fidxln   = "fractional indexes in the computation domain",&
       l_rcoordln = "Status of the real coordinates",&
       l_icoordln = "Status of the integer coordinates"
 
@@ -93,10 +96,11 @@ IMPLICIT NONE
     REAL(dp):: r_dt      = -1.0d0
     INTEGER :: nb_record = -1 !<number of record in the file
 
-    INTEGER :: ra_dataid   = -1
-    INTEGER :: ra_sigmaid  = -1
+    INTEGER :: ra_datid   = -1
+    INTEGER :: ra_stdid    = -1
     INTEGER :: ia_icoordid = -1
     INTEGER :: ra_rcoordid = -1
+    INTEGER :: ra_fidxid = -1
     INTEGER :: l_rcoordid  = -1
     INTEGER :: l_icoordid  = -1
     INTEGER :: i_tsid      = -1
@@ -258,10 +262,13 @@ CONTAINS
 
     CALL chkerr(nf90_open(TRIM(td_ncfile%filename),NF90_NOCLOBBER,td_ncfile%ncid), fname=td_ncfile%filename)
 
-    CALL chkerr( nf90_inq_varid( td_ncfile%ncid, tm_oAtt%ra_data  , td_ncfile%ra_dataid   ) )
-    CALL chkerr( nf90_inq_varid( td_ncfile%ncid, tm_oAtt%ra_sigma , td_ncfile%ra_sigmaid  ) )
+    CALL chkerr( nf90_inq_varid( td_ncfile%ncid, tm_oAtt%ra_data, td_ncfile%ra_datid   ) )
+    CALL chkerr( nf90_inq_varid( td_ncfile%ncid, tm_oAtt%ra_std , td_ncfile%ra_stdid  ) )
     CALL chkerr( nf90_inq_varid( td_ncfile%ncid, tm_oAtt%ia_icoord, td_ncfile%ia_icoordid ) )
     CALL chkerr( nf90_inq_varid( td_ncfile%ncid, tm_oAtt%ra_rcoord, td_ncfile%ra_rcoordid ) )
+    if( nf90_inq_varid( td_ncfile%ncid, tm_oAtt%ra_fidx, td_ncfile%ra_fidxid )/=NF90_NOERR )then
+      td_ncfile%ra_fidxid = -1
+    end if
     CALL chkerr( nf90_inq_varid( td_ncfile%ncid, tm_oAtt%l_icoord , td_ncfile%l_icoordid  ) )
     CALL chkerr( nf90_inq_varid( td_ncfile%ncid, tm_oAtt%l_rcoord , td_ncfile%l_rcoordid  ) )
     CALL chkerr( nf90_inq_varid( td_ncfile%ncid, tm_oAtt%r_date   , td_ncfile%r_dateid    ) )
@@ -322,13 +329,14 @@ CONTAINS
     CALL chkerr(nf90_def_var(td_ncfile%ncid, tm_oAtt%l_rcoord, NF90_INT   , il_date, td_ncfile%l_rcoordid))
     ila_dims2D(1)=il_nobs
     ila_dims2D(2)=il_date
-    CALL chkerr(nf90_def_var(td_ncfile%ncid, tm_oAtt%ra_data , NF90_DOUBLE, ila_dims2D, td_ncfile%ra_dataid ))
-    CALL chkerr(nf90_def_var(td_ncfile%ncid, tm_oAtt%ra_sigma, NF90_DOUBLE, ila_dims2D, td_ncfile%ra_sigmaid))
+    CALL chkerr(nf90_def_var(td_ncfile%ncid, tm_oAtt%ra_data , NF90_DOUBLE, ila_dims2D, td_ncfile%ra_datid ))
+    CALL chkerr(nf90_def_var(td_ncfile%ncid, tm_oAtt%ra_std, NF90_DOUBLE, ila_dims2D, td_ncfile%ra_stdid))
     ila_dims3D(1)=il_ndim
     ila_dims3D(2)=il_nobs
     ila_dims3D(3)=il_date
     CALL chkerr(nf90_def_var(td_ncfile%ncid, tm_oAtt%ia_icoord, NF90_INT   , ila_dims3D, td_ncfile%ia_icoordid))
     CALL chkerr(nf90_def_var(td_ncfile%ncid, tm_oAtt%ra_rcoord, NF90_DOUBLE, ila_dims3D, td_ncfile%ra_rcoordid))
+    CALL chkerr(nf90_def_var(td_ncfile%ncid, tm_oAtt%ra_fidx, NF90_DOUBLE, ila_dims3D, td_ncfile%ra_fidxid))
     CALL saveatt(td_ncfile)
     CALL chkerr(nf90_enddef(td_ncfile%ncid))
     td_ncfile%isOpened = .TRUE.
@@ -393,13 +401,14 @@ CONTAINS
       CALL chkerr(nf90_put_var(td_ncfile%ncid, td_ncfile%ia_icoordid, td_obs%ia_icoord, start = ila_start3D, COUNT = ila_count3D))
     IF(td_obs%l_rcoord)&
       CALL chkerr(nf90_put_var(td_ncfile%ncid, td_ncfile%ra_rcoordid, td_obs%ra_rcoord, start = ila_start3D, COUNT = ila_count3D))
+    CALL chkerr(nf90_put_var(td_ncfile%ncid, td_ncfile%ra_fidxid, td_obs%ra_fidx, start = ila_start3D, COUNT = ila_count3D))
 
     IF( PRESENT(ogap) ) THEN
-      CALL chkerr(nf90_put_var(td_ncfile%ncid, td_ncfile%ra_dataid , td_obs%ra_obsgap  , start = ila_start2D, COUNT = ila_count2D))
-      CALL chkerr(nf90_put_var(td_ncfile%ncid, td_ncfile%ra_sigmaid, td_obs%ra_Rm1, start = ila_start2D, COUNT = ila_count2D))
+      CALL chkerr(nf90_put_var(td_ncfile%ncid, td_ncfile%ra_datid, td_obs%ra_inn, start = ila_start2D, COUNT = ila_count2D))
+      CALL chkerr(nf90_put_var(td_ncfile%ncid, td_ncfile%ra_stdid, td_obs%ra_Rm1, start = ila_start2D, COUNT = ila_count2D))
     ELSE
-      CALL chkerr(nf90_put_var(td_ncfile%ncid, td_ncfile%ra_dataid , td_obs%ra_obs  , start = ila_start2D, COUNT = ila_count2D))
-      CALL chkerr(nf90_put_var(td_ncfile%ncid, td_ncfile%ra_sigmaid, td_obs%ra_sigma, start = ila_start2D, COUNT = ila_count2D))
+      CALL chkerr(nf90_put_var(td_ncfile%ncid, td_ncfile%ra_datid, td_obs%ra_obs  , start = ila_start2D, COUNT = ila_count2D))
+      CALL chkerr(nf90_put_var(td_ncfile%ncid, td_ncfile%ra_stdid, td_obs%ra_std, start = ila_start2D, COUNT = ila_count2D))
     END IF
     td_ncfile%i_nextRec = il_rec + 1
     CALL debug('... done', tag=dNETCDF)
@@ -444,7 +453,7 @@ CONTAINS
     CALL chkerr( nf90_get_var( td_ncfile%ncid, td_ncfile%l_rcoordid, il_rcoord, start = ila_start1D ) )
     ll_icoord = int2l(il_icoord)
     ll_rcoord = int2l(il_rcoord)
-    CALL set_obsSize( td_obs, td_ncfile%i_nobs, id_coord_ndim=td_ncfile%i_ndim, ld_icoord=ll_icoord, ld_rcoord=ll_rcoord )
+    CALL set_obsSize( td_obs, td_ncfile%i_nobs, ndim=td_ncfile%i_ndim, icoord=ll_icoord, rcoord=ll_rcoord )
     !integer coordinates
     IF(td_obs%l_icoord)THEN
       CALL chkerr(nf90_get_var(td_ncfile%ncid, td_ncfile%ia_icoordid, td_obs%ia_icoord, start = ila_start3D, COUNT = ila_count3D))
@@ -453,16 +462,20 @@ CONTAINS
     IF(td_obs%l_rcoord)THEN
       CALL chkerr(nf90_get_var(td_ncfile%ncid, td_ncfile%ra_rcoordid, td_obs%ra_rcoord, start = ila_start3D, COUNT = ila_count3D))
     END IF
+    !FRACTIONAL INDEXES
+    IF(td_ncfile%ra_fidxid/=-1)THEN
+      CALL chkerr(nf90_get_var(td_ncfile%ncid, td_ncfile%ra_fidxid, td_obs%ra_fidx, start = ila_start3D, COUNT = ila_count3D))
+    END IF
     CALL chkerr( nf90_get_var( td_ncfile%ncid, td_ncfile%r_dateid  , td_obs%r_date, start = ila_start1D ) )
     CALL chkerr (nf90_get_var( td_ncfile%ncid, td_ncfile%i_tsid    , td_obs%i_ts  , start = ila_start1D ) )
 
     IF( PRESENT(ogap) ) THEN
-      CALL chkerr(nf90_get_var(td_ncfile%ncid, td_ncfile%ra_dataid , td_obs%ra_obsgap  , start = ila_start2D, COUNT = ila_count2D))
-      CALL chkerr(nf90_get_var(td_ncfile%ncid, td_ncfile%ra_sigmaid, td_obs%ra_Rm1, start = ila_start2D, COUNT = ila_count2D))
+      CALL chkerr(nf90_get_var(td_ncfile%ncid, td_ncfile%ra_datid, td_obs%ra_inn, start = ila_start2D, COUNT = ila_count2D))
+      CALL chkerr(nf90_get_var(td_ncfile%ncid, td_ncfile%ra_stdid, td_obs%ra_Rm1, start = ila_start2D, COUNT = ila_count2D))
     ELSE
-      CALL chkerr(nf90_get_var(td_ncfile%ncid, td_ncfile%ra_dataid , td_obs%ra_obs  , start = ila_start2D, COUNT = ila_count2D))
-      CALL chkerr(nf90_get_var(td_ncfile%ncid, td_ncfile%ra_sigmaid, td_obs%ra_sigma, start = ila_start2D, COUNT = ila_count2D))
-      td_obs%ra_Rm1 = 1.0_cp/td_obs%ra_sigma**2
+      CALL chkerr(nf90_get_var(td_ncfile%ncid, td_ncfile%ra_datid, td_obs%ra_obs  , start = ila_start2D, COUNT = ila_count2D))
+      CALL chkerr(nf90_get_var(td_ncfile%ncid, td_ncfile%ra_stdid, td_obs%ra_std, start = ila_start2D, COUNT = ila_count2D))
+      td_obs%ra_Rm1 = 1.0_cp/td_obs%ra_std**2
     END IF
     td_ncfile%i_nextRec = il_rec + 1
     td_obs%ra_dx = td_ncfile%ra_dx
@@ -559,8 +572,14 @@ CONTAINS
   !! \param[in, out] td_obsOut data struction of the observation output file
   !! \param[in] td_cop data structure of the observation parameters
   !! \param[in] id_ts time step associated with observation to be saved
-  !! \details rda_state can be only one of multiple variables describing the system state, that is the case that is automatically accounted for. If the user does not want to separates variables, he may have to do some work for the general case. Observation are sample from rda_state using coordinates in td_obs.
-  !! This routine supposes that any dynamic array is allocated and have the right size. It is also assumed that the random number generator is initialized accordingly.
+  !! \details rda_state can be only one of multiple variables describing the
+  !!  system state, that is the case that is automatically accounted for. If
+  !!  the user does not want to separates variables, he may have to do some work
+  !!  for the general case. Observation are sample from rda_state using
+  !!  coordinates in td_obs.
+  !! This routine supposes that any dynamic array is allocated and have the
+  !! right size. It is also assumed that the random number generator is
+  !! initialized accordingly.
   !<
   SUBROUTINE obs_sample_and_save_1D( rda_state, td_obs, td_obsOut, td_cop, id_ts )
     TYPE(obs_structure), INTENT(IN OUT):: td_obs
@@ -577,13 +596,14 @@ CONTAINS
         !Since there can be many observations with different error standard deviation, the randmod is initialize at every call
         ALLOCATE( rda_error( SIZE(td_obs%ra_obs) ) )
         IF(td_cop%r_sigmaR .GT. epsilon(0.0_cp))THEN
-          CALL init_normal_rand(mu=0.0_cp, sigma=td_cop%r_sigmaR)
-          CALL normal_random(rda_error)
+          !CALL init_normal_rand(mu=0.0_cp, sigma=td_cop%r_sigmaR)
+          !CALL normal_random(rda_error)
+          call rnormal(rda_error, mu=0.0_cp, sd=td_cop%r_sigmaR)
           CALL debug(rda_error, "in obs_sample_and_save_1D, rda_error = ", tag=dTRACE)
-          td_obs%ra_sigma = td_cop%r_sigmaR
+          td_obs%ra_std = td_cop%r_sigmaR
         ELSE
           rda_error = 0.0_cp
-          td_obs%ra_sigma = 1.0_cp
+          td_obs%ra_std = 1.0_cp
         END IF
         CALL subsample( rda_state, td_obs%ia_icoord(1,:), td_obs%ra_obs, error=rda_error )
         td_obs%l_icoord = .TRUE.
@@ -602,8 +622,13 @@ CONTAINS
   !! \param[in, out] td_obsOut data struction of the observation output file
   !! \param[in] td_cop data structure of the observation parameters
   !! \param[in] id_ts time step associated with observation to be saved
-  !! \details \a rda_state can be only one of multiple variables describing the system state, that is the case that is automatically accounted for. If the user does not want to separates variables, he has to write a wrapping subroutine. Observation are sample from \a rda_state using coordinates in td_obs.
-  !!This routine supposes that any dynamic array is allocated and have the right size. It is also assumed that the random number generator is initialized accordingly.
+  !! \details \a rda_state can be only one of multiple variables describing the
+  !! system state, that is the case that is automatically accounted for. If the
+  !! user does not want to separates variables, he has to write a wrapping
+  !! subroutine. Observation are sample from \a rda_state using coordinates in td_obs.
+  !!This routine supposes that any dynamic array is allocated and have the
+  !! right size. It is also assumed that the random number generator is
+  !! initialized accordingly.
   !<
   SUBROUTINE obs_sample_and_save_2D(rda_state, td_obs, td_obsOut, td_cop, id_ts)
     TYPE(obs_structure), INTENT(IN OUT)  :: td_obs
@@ -621,12 +646,13 @@ CONTAINS
         !Since there can be many observations with different error standard deviation, the randmod is initialize at every call
         ALLOCATE( rda_error( SIZE(td_obs%ra_obs) ) )
         IF(td_cop%r_sigmaR .GT. epsilon(0.0_cp))THEN
-          CALL init_normal_rand(mu=0.0_cp, sigma=td_cop%r_sigmaR)
-          CALL normal_random(rda_error)
-          td_obs%ra_sigma = td_cop%r_sigmaR
+          !CALL init_normal_rand(mu=0.0_cp, sigma=td_cop%r_sigmaR)
+          !CALL normal_random(rda_error)
+          call rnormal(rda_error, mu=0.0_cp, sd=td_cop%r_sigmaR)
+          td_obs%ra_std = td_cop%r_sigmaR
         ELSE
           rda_error = 0.0_cp
-          td_obs%ra_sigma = 1.0_cp
+          td_obs%ra_std = 1.0_cp
         END IF
         !CALL debug(td_obs%ia_icoord, 'td_obs%ia_icoord = ', tag=dALLWAYS)
         !CALL dpause('In obs_sample_and_save_2D')

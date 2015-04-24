@@ -1,5 +1,5 @@
 !> \file checkpoint.f90
-!! \brief Checpointing module routines for BALAISE, used mainly for generalised diffusion projection
+!! @brief Checpointing module routines for BALAISE, used mainly for generalised diffusion projection
 !! @author Innocent Souopgui
 !! @version 1.0
 MODULE checkpoint
@@ -8,10 +8,10 @@ IMPLICIT NONE
 
   !>
   LOGICAL, PRIVATE :: lm_checkpoint_on_disk = .TRUE.
-  !>\brief File Id used in this module for checkpointing
+  !>@brief File Id used in this module for checkpointing
   INTEGER, PRIVATE, PARAMETER :: im_nunit = 10
 
-  !> \brief User define type for checkpoint
+  !> @brief User define type for checkpoint
   TYPE checkpoint_type
     INTEGER :: i_unit = -1 !>
     INTEGER :: i_nRecord = -1!> maximum number of record to be saved
@@ -24,20 +24,20 @@ IMPLICIT NONE
 
   TYPE(checkpoint_type), PRIVATE, SAVE, DIMENSION(im_nunit):: tm_chkp
 
-  !> \brief interface for opening checkpoint unit
+  !> @brief interface for opening checkpoint unit
   INTERFACE chkp_open
     MODULE PROCEDURE chkp_open_for_write
     MODULE PROCEDURE chkp_open_for_read
   END INTERFACE chkp_open
 
-  !> \brief interface for writing/saving checkpoint data
+  !> @brief interface for writing/saving checkpoint data
   INTERFACE chkp_save
     MODULE PROCEDURE chkp_save_1v_1d!one variable on 1d
     MODULE PROCEDURE chkp_save_1v_2d!one variable on 2d
 !     MODULE PROCEDURE chkp_save_2v_2d!two variables on 2d
   END INTERFACE chkp_save
 
-  !> \brief interface for reading/restauring checkpoint data
+  !> @brief interface for reading/restauring checkpoint data
   INTERFACE chkp_restaure
     MODULE PROCEDURE chkp_restaure_1v_1d!one variable on 1d
     MODULE PROCEDURE chkp_restaure_1v_2d !one variable on 2d
@@ -46,9 +46,9 @@ IMPLICIT NONE
 
 CONTAINS
 
-  !> \brief Check the id of the checkpointing unit
-  !! \param[in] id_chkpId, checkpoint identifier, this must be an integer between 1 and im_nunit
-  !! \details Causes the program to stop if the id_chkpId is out of bounds
+  !> @brief Check the id of the checkpointing unit
+  !! @param [in] id_chkpId checkpoint identifier, this must be an integer between 1 and im_nunit
+  !! @details  Causes the program to stop if the id_chkpId is out of bounds
   !<
   SUBROUTINE chkp_check_id(id_chkpId)
     INTEGER, INTENT(IN) :: id_chkpId
@@ -64,12 +64,12 @@ CONTAINS
     END IF
   END SUBROUTINE chkp_check_id
 
-  !> \brief Prepares and checks parameters to open a checkpointing unit
-  !! \param[in] id_chkpId, checkpoint identifier, this must be an integer between 1 and im_nunit
-  !! \param[in] id_nVar Number of variables to be saved in the checkpointing unit
-  !! \param[in] id_varSize Size of each variable
-  !! \param[in] nrec (optional) maximum number of record in the checkpointing unit, this is mandatory only if checkpoint is saved in memory
-  !! \details If one needs more checkpoint units, increase the value of the variable im_nunit
+  !> @brief Prepares and checks parameters to open a checkpointing unit
+  !! @param [in] id_chkpId checkpoint identifier, this must be an integer between 1 and im_nunit
+  !! @param [in] id_nVar Number of variables to be saved in the checkpointing unit
+  !! @param [in] id_varSize Size of each variable
+  !! @param [in] nrec (optional) maximum number of record in the checkpointing unit, this is mandatory only if checkpoint is saved in memory
+  !! @details  If one needs more checkpoint units, increase the value of the variable im_nunit
   !! Causes the program to stop if the id_chkpId is out of bounds
   !<
   SUBROUTINE chkp_prepare_param(id_chkpId, id_nVar, id_varSize, nrec)
@@ -92,12 +92,12 @@ CONTAINS
     END IF
   END SUBROUTINE chkp_prepare_param
 
-  !> \brief Open a checkpoint unit for write
-  !! \param[in] id_chkpId, checkpoint identifier, this must be an integer between 1 and im_nunit
-  !! \param[in] id_nVar Number of variables to be saved in the checkpointing unit
-  !! \param[in] id_varSize Size of each variable
-  !! \param[in] nrec (optional) maximum number of record in the checkpointing unit, this is mandatory only if checkpoint is saved in memory
-  !! \details If one needs more checkpoint units, increase the value of the variable im_nunit
+  !> @brief Open a checkpoint unit for write
+  !! @param [in] id_chkpId checkpoint identifier, this must be an integer between 1 and im_nunit
+  !! @param [in] id_nVar Number of variables to be saved in the checkpointing unit
+  !! @param [in] id_varSize Size of each variable
+  !! @param [in] nrec (optional) maximum number of record in the checkpointing unit, this is mandatory only if checkpoint is saved in memory
+  !! @details  If one needs more checkpoint units, increase the value of the variable im_nunit
   !! This routine allocates space for memory checkpointing if necessary
   !! See checkpoint module for details on im_nunit
   !<
@@ -119,9 +119,9 @@ CONTAINS
     END IF
   END SUBROUTINE chkp_open_for_write
 
-  !> \brief Open a checkpoint unit for read
-  !! \param[in] id_chkpId, checkpoint identifier, this must be an integer between 1 and im_nunit
-  !! \details This routine assumes the file or memory space already exists
+  !> @brief Open a checkpoint unit for read
+  !! @param [in] id_chkpId checkpoint identifier, this must be an integer between 1 and im_nunit
+  !! @details  This routine assumes the file or memory space already exists
   !<
   SUBROUTINE chkp_open_for_read(id_chkpId)
     INTEGER, INTENT(IN) :: id_chkpId
@@ -142,9 +142,9 @@ CONTAINS
     END IF
   END SUBROUTINE chkp_open_for_read
 
-  !> \brief Close a checkpoint unit
-  !! \param[in] id_chkpId, checkpoint identifier, this must be an integer between 1 and im_nunit
-  !! \details see checkpoint module for details
+  !> @brief Close a checkpoint unit
+  !! @param [in] id_chkpId checkpoint identifier, this must be an integer between 1 and im_nunit
+  !! @details  see checkpoint module for details
   !<
   SUBROUTINE chkp_close(id_chkpId)
     INTEGER, INTENT(IN) :: id_chkpId
@@ -161,12 +161,12 @@ CONTAINS
     END IF
   END SUBROUTINE chkp_close
 
-  !> \brief save vector (for adjoint calculations)
-  !! \param[in] id_chkpId identifier of the unit where to save
-  !! \param[in] rda_u intermediate result to be saved
-  !! \param[in] id_rec record number to save the intermediate result
+  !> @brief save vector (for adjoint calculations)
+  !! @param [in] id_chkpId identifier of the unit where to save
+  !! @param [in] rda_u intermediate result to be saved
+  !! @param [in] id_rec record number to save the intermediate result
   !! \todo The project is to have two options for saving intermediate results : 1st option to file and second option in memory whith total transparency for the user
-  !! \details The value of id_chkpId must be between 1 and im_nunit, see checkpoint module for details
+  !! @details  The value of id_chkpId must be between 1 and im_nunit, see checkpoint module for details
   !<
   SUBROUTINE chkp_save_vec(id_chkpId, rda_u, id_rec)
     INTEGER, INTENT(IN) :: id_chkpId, id_rec
@@ -179,12 +179,12 @@ CONTAINS
     END IF
   END SUBROUTINE chkp_save_vec
 
-  !> \brief restaures intermediate results (one variable, one dimension) for adjoint calculations
-  !! \param[in] id_chkpId identifier of the unit where the result had been saved
-  !! \param[in, out] rda_vec contained the restaure intermediate results
-  !! \param[in] id_rec record number to restaure
+  !> @brief restaures intermediate results (one variable, one dimension) for adjoint calculations
+  !! @param [in] id_chkpId identifier of the unit where the result had been saved
+  !! @param [in, out] rda_vec contained the restaure intermediate results
+  !! @param [in] id_rec record number to restaure
   !! \todo The project is to have two options for restauring intermediate results : 1st option to file and second option in memory whith total transparency for the user
-  !! \details The value of id_chkpId must be between 1 and im_nunit, see checkpoint module for details
+  !! @details  The value of id_chkpId must be between 1 and im_nunit, see checkpoint module for details
   !<
   SUBROUTINE chkp_restaure_vec(id_chkpId, rda_vec, id_rec)
     INTEGER, INTENT(IN) :: id_chkpId, id_rec
@@ -197,12 +197,12 @@ CONTAINS
     END IF
   END SUBROUTINE chkp_restaure_vec
 
-  !> \brief save intermediate results of GD projection (one variable, one dimension) for adjoint calculations
-  !! \param[in] id_chkpId identifier of the unit where to save
-  !! \param[in] rda_u intermediate result to be saved
-  !! \param[in] id_rec record number to save the intermediate result
+  !> @brief save intermediate results of GD projection (one variable, one dimension) for adjoint calculations
+  !! @param [in] id_chkpId identifier of the unit where to save
+  !! @param [in] rda_u intermediate result to be saved
+  !! @param [in] id_rec record number to save the intermediate result
   !! \todo The project is to have two options for saving intermediate results : 1st option to file and second option in memory whith total transparency for the user
-  !! \details The value of id_chkpId must be between 1 and im_nunit, see checkpoint module for details
+  !! @details  The value of id_chkpId must be between 1 and im_nunit, see checkpoint module for details
   !<
   SUBROUTINE chkp_save_1v_1d(id_chkpId, rda_u, id_rec)
     INTEGER, INTENT(IN) :: id_chkpId, id_rec
@@ -211,12 +211,12 @@ CONTAINS
     CALL chkp_save_vec(id_chkpId, rda_u, id_rec)
   END SUBROUTINE chkp_save_1v_1d
 
-  !> \brief save intermediate results of GD projection (one variable, two dimensions) for adjoint calculations
-  !! \param[in] id_chkpId identifier of the unit where to save
-  !! \param[in] rda_u intermediate result to be saved
-  !! \param[in] id_rec record number to save the intermediate result
+  !> @brief save intermediate results of GD projection (one variable, two dimensions) for adjoint calculations
+  !! @param [in] id_chkpId identifier of the unit where to save
+  !! @param [in] rda_u intermediate result to be saved
+  !! @param [in] id_rec record number to save the intermediate result
   !! \todo The project is to have two options for saving intermediate results : 1st option to file and second option in memory whith total transparency for the user
-  !! \details The value of id_chkpId must be between 1 and im_nunit, see checkpoint module for details
+  !! @details  The value of id_chkpId must be between 1 and im_nunit, see checkpoint module for details
   !<
   SUBROUTINE chkp_save_1v_2d(id_chkpId, rda_u, id_rec)
     INTEGER, INTENT(IN) :: id_chkpId, id_rec
@@ -227,12 +227,12 @@ CONTAINS
     CALL chkp_save_vec(id_chkpId, rla_vec, id_rec)
   END SUBROUTINE chkp_save_1v_2d
 
-  !> \brief restaures intermediate results (one variable, one dimension) for adjoint calculations
-  !! \param[in] id_chkpId identifier of the unit where the result had been saved
-  !! \param[in, out] rda_u contained the restaure intermediate results
-  !! \param[in] id_rec record number to restaure
+  !> @brief restaures intermediate results (one variable, one dimension) for adjoint calculations
+  !! @param [in] id_chkpId identifier of the unit where the result had been saved
+  !! @param [in, out] rda_u contained the restaure intermediate results
+  !! @param [in] id_rec record number to restaure
   !! \todo The project is to have two options for restauring intermediate results : 1st option to file and second option in memory whith total transparency for the user
-  !! \details The value of id_chkpId must be between 1 and im_nunit, see checkpoint module for details
+  !! @details  The value of id_chkpId must be between 1 and im_nunit, see checkpoint module for details
   !<
   SUBROUTINE chkp_restaure_1v_1d(id_chkpId, rda_u, id_rec)
     INTEGER, INTENT(IN) :: id_chkpId, id_rec
@@ -241,12 +241,12 @@ CONTAINS
     CALL chkp_restaure_vec(id_chkpId, rda_u, id_rec)
   END SUBROUTINE chkp_restaure_1v_1d
 
-  !> \brief restaures intermediate results (one variable, two dimensions) for adjoint calculations
-  !! \param[in] id_chkpId identifier of the unit where the result had been saved
-  !! \param[in, out] rda_u contained the restaure intermediate results
-  !! \param[in] id_rec record number to restaure
+  !> @brief restaures intermediate results (one variable, two dimensions) for adjoint calculations
+  !! @param [in] id_chkpId identifier of the unit where the result had been saved
+  !! @param [in, out] rda_u contained the restaure intermediate results
+  !! @param [in] id_rec record number to restaure
   !! \todo The project is to have two options for restauring intermediate results : 1st option to file and second option in memory whith total transparency for the user
-  !! \details The value of id_chkpId must be between 1 and im_nunit, see checkpoint module for details
+  !! @details  The value of id_chkpId must be between 1 and im_nunit, see checkpoint module for details
   !<
   SUBROUTINE chkp_restaure_1v_2d(id_chkpId, rda_u, id_rec)
     INTEGER, INTENT(IN) :: id_chkpId, id_rec

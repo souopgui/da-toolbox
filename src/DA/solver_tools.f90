@@ -1,6 +1,7 @@
 !>file solver_tools.f90
-!!\brief generic module for solvers. Define the solver for external case.
-!!\detail the function run_solver should be rewritten for internal case where the solver is simply a routine
+!!@brief generic module for solvers. Define the solver for external case.
+!!@details the function run_solver should be rewritten for internal case
+!! where the solver is simply a routine
 !<
 MODULE solver_tools
   USE general_constant
@@ -12,9 +13,11 @@ IMPLICIT NONE
 
 CONTAINS
 
-  !>\brief Initialize the solver
-  !!\detail important for internal solver where there is a need to prepare the system, allocate memory, open files, etc.
-  !!\this subroutine can be used to load background or control variable is they are store in a specific format
+  !> @brief Initialize the solver
+  !! @details important for internal solver where there is a need to
+  !! prepare the system, allocate memory, open files, etc.
+  !! this subroutine can be used to load background or control variable
+  !! is they are store in a specific format
   !<
   SUBROUTINE init_solver(td_ep, id_nctl)
     TYPE(exchange_param), INTENT(INOUT) :: td_ep
@@ -66,9 +69,12 @@ CONTAINS
     END SELECT
   END SUBROUTINE init_solver
 
-  !>\brief Finalize the solver
-  !!\detail important for internal solver where there is a need to clean the system, free memory, close files, etc.
-  !!\this subroutine can be used to save the analysed control variable if a specific format is used, in which case the change of variable is applied, and equilibration (balance in BALAISE)
+  !> @brief Finalize the solver
+  !! @details important for internal solver where there is a need
+  !! to clean the system, free memory, close files, etc.
+  !! this subroutine can be used to save the analysed control variable
+  !! if a specific format is used, in which case the change of variable
+  !! is applied, and equilibration.
   !<
   SUBROUTINE finalize_solver(td_ep)
     TYPE(exchange_param), INTENT(INOUT) :: td_ep
@@ -76,8 +82,10 @@ CONTAINS
     CALL nothing(td_ep%r_nothing)
   END SUBROUTINE finalize_solver
 
-  !>\brief Run the solver to respond to the request specified by the exchange parameter
-  !!\detail this routine correspond to the external solver to be run as independent program by system call
+  !> @brief Run the solver to respond to the request specified by
+  !> the exchange parameter
+  !! @details this routine correspond to the external solver to
+  !! be run as independent program by system call
   !<
   SUBROUTINE run_solver( td_ep )
     TYPE(exchange_param), INTENT(INOUT) :: td_ep
@@ -116,8 +124,9 @@ CONTAINS
     !CALL debug('', 'In run_solver, resuming with action = <'//TRIM(td_ep%aa_solver_action)//'>', tag=dALLWAYS)
   END SUBROUTINE run_solver
 
-  !> \brief change of variable : transforms the CTL of the preconditioned pb to the CTL of the original pb
-  !! \param[in,out] td_ep exchange parameter
+  !> @brief change of variable : transforms the CTL of the preconditioned pb
+  !> to the CTL of the original pb
+  !! @param [in,out] td_ep exchange parameter
   !<
   SUBROUTINE chavar(td_ep)
     TYPE(exchange_param), INTENT(IN OUT) :: td_ep
@@ -125,9 +134,9 @@ CONTAINS
     CALL apply_square_cov( td_ep%ra_c_ctl, td_ep%ra_dctl, die=.FALSE. )
   END SUBROUTINE chavar
 
-	!> \brief interface for saving ctl in simple plot format
-	!! \param[in] td_ep exchange parameter
-	!! \param[in] id_dType data type (CTL_DATA, ...)
+	!> @brief interface for saving ctl in simple plot format
+	!! @param [in] td_ep exchange parameter
+	!! @param [in] id_dType data type (CTL_DATA, ...)
 	!!
 	!! this routine should be adapted to the project
 	!<
@@ -153,7 +162,7 @@ CONTAINS
 		!end of saving obs for plotting
 	END SUBROUTINE save_ctl_plot_data
 
-  !> \brief compute the inner product of \a rda_u et \a rda_v
+  !> @brief compute the inner product of \a rda_u et \a rda_v
   !<
   SUBROUTINE prosca(id_ctl, rda_u, rda_v, rd_ps, ida_wa, rda_wa, dda_wa)
     INTEGER , INTENT(IN) :: id_ctl
@@ -167,7 +176,7 @@ CONTAINS
     CALL nothing(ida_wa, rda_wa, dda_wa)
   END SUBROUTINE prosca
 
-  !> \brief Change of basis
+  !> @brief Change of basis
   SUBROUTINE ctonb(id_ctl, rda_x, rda_y, ida_wa, rda_wa, dda_wa)
     INTEGER , INTENT(IN) :: id_ctl
     REAL(cp), DIMENSION(id_ctl), INTENT(IN) :: rda_x
@@ -180,7 +189,7 @@ CONTAINS
     CALL nothing(ida_wa, rda_wa, dda_wa)
   END SUBROUTINE ctonb
 
-  !> \brief Change of basis, reverse operation associated with ctonb
+  !> @brief Change of basis, reverse operation associated with ctonb
   SUBROUTINE ctcab(id_ctl, rda_y, rda_x, ida_wa, rda_wa, dda_wa)
     INTEGER , INTENT(IN) :: id_ctl
     REAL(cp), DIMENSION(id_ctl), INTENT(IN) :: rda_y

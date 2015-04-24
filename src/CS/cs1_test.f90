@@ -225,8 +225,8 @@ CONTAINS
     CALL debug('', 'In costb: ending <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
   END SUBROUTINE costb
 
-  !> \brief Generates and saves a control vector
-  !! \param[inout] td_ep exchange parameter
+  !> @brief Generates and saves a control vector
+  !! @param [in,out] td_ep exchange parameter
   !<
   SUBROUTINE make_random_ctl(td_ep)
     TYPE(exchange_param), INTENT(INOUT) :: td_ep
@@ -242,8 +242,8 @@ CONTAINS
     td_ep%aa_solver_action = ala_tmpAction!restauring the action
   END SUBROUTINE make_random_ctl
 
-  !> \brief Generates a zero background control vector
-  !! \param[inout] td_ep exchange parameter
+  !> @brief Generates a zero background control vector
+  !! @param [in,out] td_ep exchange parameter
   !<
   SUBROUTINE make_zero_bg(td_ep)
     TYPE(exchange_param), INTENT(INOUT) :: td_ep
@@ -256,8 +256,8 @@ CONTAINS
     CALL debug('', 'In make_zero_bg: after write_ep_data')
   END SUBROUTINE make_zero_bg
 
-  !> \brief run direct model and saves the trajectory
-  !! \detail
+  !> @brief run direct model and saves the trajectory
+  !! @details
   !<
   SUBROUTINE make_model_trajectory(td_ep)
     TYPE(exchange_param), INTENT(INOUT) :: td_ep
@@ -282,8 +282,8 @@ CONTAINS
 
   END SUBROUTINE make_model_trajectory
 
-  !> \brief make twin obs, and associated model trajectory
-  !! \detail file name are build according to the action field
+  !> @brief make twin obs, and associated model trajectory
+  !! @details file name are build according to the action field
   !<
   SUBROUTINE make_twin_obs(td_ep)
     TYPE(exchange_param), INTENT(INOUT) :: td_ep

@@ -1,4 +1,4 @@
-!> \file sort_tools.f90
+!> \file sort.f90
 !! \brief defines sorting routines
 !! @author Innocent Souopgui
 !!
@@ -23,7 +23,7 @@ CONTAINS
   SUBROUTINE select_sort_int(ida_x)
     INTEGER, DIMENSION(:), INTENT(INOUT) :: ida_x
     INTEGER :: ibi, ibj, il_min_idx, il_size
-    
+
     il_size = SIZE(ida_x)
     DO ibi = 1, il_size-1
       il_min_idx = ibi
@@ -35,12 +35,12 @@ CONTAINS
       END IF
     END DO
   END SUBROUTINE select_sort_int
-  
+
   SUBROUTINE switch_int(id_a, id_b)
     INTEGER, INTENT(INOUT) :: id_a, id_b
     !local variables
     INTEGER :: il_tmp
-    
+
     il_tmp = id_a
     id_a = id_b
     id_b = il_tmp

@@ -19,7 +19,7 @@ IMPLICIT NONE
   !tg_obs%i_nb_dim  = 1
   tg_obs%obs_fName  = make_fileName(tg_ep, OBS_DATA, INPUT_FILE)
   tg_obs%ogap_fName = make_fileName(tg_ep, OGAP_DATA, RTIME_FILE)
-  
+
   !CALL print_ep(tg_ep)
   CALL debug(tg_ep%aa_solver_action, 'Running cs2_test for ')
   SELECT CASE(tg_ep%aa_solver_action)
@@ -62,16 +62,16 @@ CONTAINS
     !CALL init_fftw()
     CALL init_cs_tools()
   END SUBROUTINE init_all
-  
+
   SUBROUTINE finalize_all()
     !CALL finalize_fftw()
     CALL finalize_cs_tools()
   END SUBROUTINE finalize_all
-  
+
   !> initializes direct model
   SUBROUTINE init_direct(td_ep)
     TYPE(exchange_param), INTENT(IN) :: td_ep
-    
+
     ALLOCATE( rga_state( get_ctlSize(td_ep) ) )
   END SUBROUTINE init_direct
 
@@ -79,7 +79,7 @@ CONTAINS
   SUBROUTINE init_cost(td_ep, td_obs)
     TYPE(exchange_param), INTENT(IN) :: td_ep
     TYPE(obs_structure), INTENT(INOUT) :: td_obs
-    
+
     CALL init_direct(td_ep)
     CALL read_obs(td_obs)
     ALLOCATE( rga_obsgap ( get_obsSize(td_obs) ) )
@@ -90,7 +90,7 @@ CONTAINS
   SUBROUTINE init_grad(td_ep, td_obs)
     TYPE(exchange_param), INTENT(IN) :: td_ep
     TYPE(obs_structure), INTENT(INOUT) :: td_obs
-  
+
     CALL read_obsgap(td_obs)
     !CALL print_os(td_obs)
     ALLOCATE( rga_state  ( get_ctlSize(td_ep ) ),&
@@ -99,7 +99,7 @@ CONTAINS
               rga_obsgapb( get_obsSize(td_obs) ) &
     )
   END SUBROUTINE init_grad
-  
+
   !> zeroing adjoint variables
   !<
   SUBROUTINE adjoint_zeroing(td_ep)
@@ -109,7 +109,7 @@ CONTAINS
     td_ep%ra_grad = 0.0_cp
     rg_costb      = 1.0_cp
   END SUBROUTINE adjoint_zeroing
-  
+
   !> direct model for the compressive sensing problem
   SUBROUTINE direct(rda_ctl, rda_state)
     REAL(cp), DIMENSION(:), INTENT(IN) :: rda_ctl
@@ -151,20 +151,20 @@ CONTAINS
     REAL(cp), INTENT(OUT) :: rd_cost
     !local variables
     REAL(cp) :: rl_ocost, rl_rcost
-    
+
     CALL debug('', 'In cost: starting %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
     CALL direct(rda_ctl, rga_state)
     rga_obsgap = rga_state( tg_obs%ia_icoord(1,:) ) - tg_obs%ra_obs
-    
+
     rl_ocost = SUM(tg_obs%ra_Rm1*rga_obsgap**2)
     rl_rcost = SUM( ABS(rda_ctl) )
-    
+
     CALL debug( (/rl_ocost, rl_rcost/), '(/rl_ocost, rl_rcost/) = ' )
-    
+
     rd_cost = rl_ocost/get_obsSize(tg_obs) + tg_ep%r_cs_reg*rl_rcost/SIZE(rda_ctl)
     !saving obsgap
     tg_obs%ra_obsgap = rga_obsgap
-    CALL debug(rd_cost, 'In cost: rd_cost = ') 
+    CALL debug(rd_cost, 'In cost: rd_cost = ')
     !CALL debug(tg_obs%ra_obsgap, 'In cost: writing obsgap, tg_obs%ra_obsgap = ')
     CALL write_obsgap(tg_obs)
     !saving exchange parameters
@@ -212,14 +212,14 @@ CONTAINS
     !CALL debug(rda_ctlb, 'In costb: rda_ctlb = ')
     CALL debug('', 'In costb: ending <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
   END SUBROUTINE costb
-  
-  !> \brief Generates and saves a control vector
-  !! \param[inout] td_ep exchange parameter
+
+  !> @brief Generates and saves a control vector
+  !! @param [in,out] td_ep exchange parameter
   !<
   SUBROUTINE make_random_ctl(td_ep)
     TYPE(exchange_param), INTENT(INOUT) :: td_ep
     CHARACTER(LEN=IP_ACTION_LEN) :: ala_tmpAction
-    
+
     ala_tmpAction = td_ep%aa_solver_action!saving the action
     CALL set_default_ctl_param(td_ep)
     CALL debug('In make_random_ctl, after set_default_ctl_param(td_ep)' )
@@ -229,21 +229,21 @@ CONTAINS
     CALL make_twin_obs(td_ep)!make and save twin obs and associated model trajectory
     td_ep%aa_solver_action = ala_tmpAction!restauring the action
   END SUBROUTINE make_random_ctl
-  
-  !> \brief Generates a zero background control vector
-  !! \param[inout] td_ep exchange parameter
+
+  !> @brief Generates a zero background control vector
+  !! @param [in,out] td_ep exchange parameter
   !<
   SUBROUTINE make_zero_bg(td_ep)
     TYPE(exchange_param), INTENT(INOUT) :: td_ep
-    
+
     CALL set_default_ctl_param(td_ep)
     td_ep%ra_ctl          = 0.0_cp
     td_ep%ra_b_ctl        = 0.0_cp
     CALL write_ep_data(tg_ep, BCTL_DATA, OUTPUT_FILE, 'make_zero_bg' )
   END SUBROUTINE make_zero_bg
-  
-  !> \brief run direct model and saves the trajectory
-  !! \detail
+
+  !> @brief run direct model and saves the trajectory
+  !! @details
   !<
   SUBROUTINE make_model_trajectory(td_ep)
     TYPE(exchange_param), INTENT(INOUT) :: td_ep
@@ -251,10 +251,10 @@ CONTAINS
     INTEGER :: il_nctl
     CHARACTER(LEN=ip_fnl) :: ala_mtFName
     REAL(cp), DIMENSION(:), ALLOCATABLE :: rla_state
-    
+
     il_nctl = get_ctlSize(td_ep)
     ALLOCATE( rla_state(il_nctl) )
-    
+
     SELECT CASE (td_ep%aa_solver_action)
       CASE (MAKE_ADMT)
         ala_mtFName  = make_fileName(td_ep, ADMT_DATA, OUTPUT_FILE)
@@ -265,11 +265,11 @@ CONTAINS
     END SELECT
     CALL direct( td_ep%ra_ctl, rla_state )
     CALL write_vector_for_plot(rla_state, ala_mtFName)!saving the model trajectory for plot
-    
+
   END SUBROUTINE make_model_trajectory
-  
-  !> \brief make twin obs, and associated model trajectory
-  !! \detail file name are build according to the action field
+
+  !> @brief make twin obs, and associated model trajectory
+  !! @details file name are build according to the action field
   !<
   SUBROUTINE make_twin_obs(td_ep)
     TYPE(exchange_param), INTENT(INOUT) :: td_ep
@@ -279,7 +279,7 @@ CONTAINS
     TYPE(obs_structure) :: tl_os
     REAL(cp), DIMENSION(:), ALLOCATABLE :: rla_state
     INTEGER , DIMENSION(:,:), ALLOCATABLE :: ila_idx
-    
+
     il_nobs = CEILING( td_ep%r_mes_fact*td_ep%r_nz_ratio*get_ctlSize(td_ep) )
     il_nctl = get_ctlSize(td_ep)
     il_ndim = 1!1D problem
@@ -292,21 +292,21 @@ CONTAINS
         ala_mtFName  = make_fileName(td_ep, TDMT_DATA, OUTPUT_FILE)
     END SELECT
     ALLOCATE( rla_state(il_nctl), ila_idx(il_ndim, il_nobs) )
-    
+
     CALL set_obsSize(tl_os, il_nobs, il_ndim, .TRUE., .FALSE.)
     CALL set_default_obs(tl_os)
     CALL set_obs_fName( tl_os, TRIM(ala_obsFName) )
-    
+
     CALL direct( td_ep%ra_ctl, rla_state )
     CALL write_vector_for_plot(rla_state, ala_mtFName)!saving the model trajectory for plot
-    
+
     CALL random_indexes(ila_idx(1,:), il_nctl)
     CALL set_obs_with_icoord(tl_os, rla_state( ila_idx(1,:) ), ila_idx)
     !CALL print_os(tl_os)
     CALL write_obs(tl_os)
     CALL set_obsSize(tl_os, 0, il_ndim, .FALSE., .FALSE.)!free dynamic space (zero size)
   END SUBROUTINE make_twin_obs
-  
+
   SUBROUTINE make_twin_obs_from_coord(td_ep)
     TYPE(exchange_param), INTENT(INOUT) :: td_ep
     !local variables
@@ -314,14 +314,14 @@ CONTAINS
     TYPE(obs_structure) :: tl_os
     REAL(cp), DIMENSION(:), ALLOCATABLE :: rla_state
     INTEGER , DIMENSION(:,:), ALLOCATABLE :: ila_idx
-    
+
     CALL set_obs_fName( tl_os, make_fileName(td_ep, OBS_DATA, INPUT_FILE) )
     CALL read_obs(tl_os)
-    
+
     il_nobs = get_obsSize(tl_os)
     il_nctl = get_ctlSize(td_ep)
     il_ndim = 1!1D problem
-    ALLOCATE( rla_state(il_nctl), ila_idx(il_ndim, il_nobs) )    
+    ALLOCATE( rla_state(il_nctl), ila_idx(il_ndim, il_nobs) )
     CALL direct( td_ep%ra_ctl, rla_state )
     !CALL set_default_obs(tl_os)
     CALL set_obs_data(tl_os, rla_state( tl_os%ia_icoord(1,:) ) )
@@ -330,5 +330,5 @@ CONTAINS
     CALL write_obs(tl_os)
     CALL set_obsSize(tl_os, 0, il_ndim, .FALSE., .FALSE.)
   END SUBROUTINE make_twin_obs_from_coord
-  
+
 END PROGRAM cs2_test

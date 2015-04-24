@@ -1,8 +1,8 @@
 !> \file gd_toolsadj.f90
-!! \brief Generalised diffusion routines for BALAISE
+!! @brief Generalised diffusion routines for BALAISE
 !! @author Innocent Souopgui
 !! @version 2.0
-!! \details In this version, the mirror boundary condition is replaced by and extrapolation.
+!! @details In this version, the mirror boundary condition is replaced by and extrapolation.
 !! The mirror boundary condition seems to give extra importance to internal points at the boundaries.
 !! The removal of the mirror boundary condition do not ensure the theoritical result but, in practice, it produces better results
 !! Instead of adding extra-cells to the grid with mirror values, the extra-cells are set to extrapolated values. In 1D, the value of the left extra-cell is given by:
@@ -15,17 +15,17 @@ MODULE gd_toolsadj
   USE gd_tools
   USE debug_tools
   USE checkpoint
-  USE adjoint_tools
+  !USE adjoint_tools
 IMPLICIT NONE
 
-  !> \brief interface for generalised diffusion (quasi-)projection
+  !> @brief interface for generalised diffusion (quasi-)projection
   INTERFACE gd_projectionadj
     MODULE PROCEDURE gd_projection_1v_1dadj!one variable on 1d
     MODULE PROCEDURE gd_projection_1v_2dadj!one variable on 2d
 !     MODULE PROCEDURE gd_projection_2v_2dadj!two variables on 2d
   END INTERFACE gd_projectionadj
 
-  !> \brief interface for ensuring mirror boundaries
+  !> @brief interface for ensuring mirror boundaries
   INTERFACE gd_projection_bcadj
     MODULE PROCEDURE gd_projection_bc_1dadj!one dimension
     MODULE PROCEDURE gd_projection_bc_2dadj!two dimensions
@@ -34,13 +34,17 @@ IMPLICIT NONE
 
 CONTAINS
 
-  !> \brief Generalised diffusion (quasi-)projection of one variable in one dimensional space
-  !! \param[in] rda_v variable to be projected
-  !! \param[out] rda_u result of the projection
-  !! \param[in] rda_phi Trust function
-  !! \param[in] rd_dx space discretization step
-  !! \param[in] id_niter, number of iterations for the iterative process
-  !! \details
+  !> @brief Generalised diffusion (quasi-)projection of one variable in one dimensional space
+  !! @param [in] rda_v variable to be projected
+  !! @param [in,out] rda_vad adjoint variable
+  !! @param [in,out] rda_uad adjoint variable
+  !! @param [in] rda_phi Trust function
+  !! @param [in] rd_dx space discretization step
+  !! @param [in] id_niter number of iterations for the iterative process
+  !! @param [in] c_unit id of the checkpointing unit, this must be
+  !!  an integer between 1 and im_nunit
+  !! @details
+  !! @todo check the extra parameter rda_ua. it seems to be there by error.
   !<
   SUBROUTINE gd_projection_1v_1dadj(rda_v, rda_vad, rda_uad, rda_phi, rd_dx, id_niter, c_unit)
     REAL(KIND=dp), DIMENSION(:), INTENT(IN)    :: rda_v, rda_phi
@@ -153,15 +157,31 @@ CONTAINS
     !End of adjoint computations
   END SUBROUTINE gd_projection_1v_1dadj
 
-  !> \brief Generalised diffusion (quasi-)projection of one variable in two dimensional space
-  !! \param[in] rda_v variable to be projected
-  !! \param[out] rda_u result of the projection
-  !! \param[in] rda_phi Trust function
-  !! \param[in] rd_dx discretization step along the x direction
-  !! \param[in] rd_dy discretization step along the y direction
-  !! \param[in] id_niter, number of iterations for the iterative process
-  !! \param[in] c_unit id of the checkpointing unit, this must be an integer between 1 and im_nunit
-  !! \details See checkpoint module for details on checkpointing units. The checkpointing unit is used to save intermediate results for adjoint calculation. If a configuration of the projection is used more than once and the adjoint calculation is necessary, the user should give different value to c_unit for each use of the configuration. If a configuration is used only once, the system can manage it. The configuration of the projection is defined by the dimensionality and the number of input to be projected. Example of configurations are : one variable in one dimension, two variables in one dimension, one variable in two dimensions, two variables in two dimension.
+  !> @brief Generalised diffusion (quasi-)projection of one variable in two dimensional space
+  !! @param [in] rda_v variable to be projected
+  !! @param [in,out] rda_vad adjoint variable
+  !! @param [in,out] rda_uad adjoint variable
+  !! @param [in] rda_phi Trust function
+  !! @param [in] rd_dx discretization step along the x direction
+  !! @param [in] rd_dy discretization step along the y direction
+  !! @param [in] id_niter number of iterations for the iterative process
+  !! @param [in] c_unit id of the checkpointing unit, this must be
+  !!  an integer between 1 and im_nunit
+  !! @details
+  !! See checkpoint module for details on checkpointing units.
+  !! The checkpointing unit is used to save intermediate results
+  !! for adjoint calculation. If a configuration of the projection
+  !! is used more than once and the adjoint calculation is necessary,
+  !! the user should give different value to c_unit for each use of
+  !! the configuration. If a configuration is used only once,
+  !! the system can manage it. The configuration of the projection
+  !! is defined by the dimensionality and the number of input to
+  !! be projected. Example of configurations are :
+  !!   - one variable in one dimension,
+  !!   - two variables in one dimension,
+  !!   - one variable in two dimensions,
+  !!   - two variables in two dimension.
+  !!  @todo check this additional parameter @ rda_uad. It seems to be there by error
   !!
   !<
   SUBROUTINE gd_projection_1v_2dadj(rda_v, rda_vad, rda_uad, rda_phi, rd_dx, rd_dy, id_niter, c_unit)
@@ -295,12 +315,12 @@ CONTAINS
 
   END SUBROUTINE gd_projection_1v_2dadj
 
-!   !> \brief Generalised diffusion (quasi)projection of one variables in two dimensional space
+!   !> @brief Generalised diffusion (quasi)projection of one variables in two dimensional space
 !   SUBROUTINE gd_projection_1v_2d()
 !   END SUBROUTINE gd_projection_1v_2d
 
-  !> \brief Ensure boundary conditions
-  !! \param[out] rda_Aad array to ensured boundary conditions
+  !> @brief Ensure boundary conditions
+  !! @param [out] rda_Aad array to ensured boundary conditions
   SUBROUTINE gd_projection_bc_1dadj(rda_Aad)
     REAL(KIND=dp), DIMENSION(:), INTENT(INOUT)  :: rda_Aad
     INTEGER                    :: il_dm, il_fm

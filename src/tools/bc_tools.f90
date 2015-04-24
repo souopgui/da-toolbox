@@ -1,5 +1,11 @@
-!!Special module for boundary conditions
-!!@author Innocent Souopgui
+!> @file bc_tools.f90
+!!
+!<
+
+!>
+!! Special module for boundary conditions
+!! @author Innocent Souopgui
+!<
 MODULE bc_tools
   USE general_constant
   USE general_tools
@@ -8,7 +14,7 @@ MODULE bc_tools
   IMPLICIT NONE
 
 
-  !> \brief User defined type for boundary conditions parameters
+  !> @brief User defined type for boundary conditions parameters
   !! Defines parameters that are used to define or manage the boundary conditions
   !<
   TYPE bc_param
@@ -18,53 +24,53 @@ MODULE bc_tools
       aa_prefix  !> prefix of the BC filename
     INTEGER :: i_ndim = -1 !> number of physical dimensions for the problem
     REAL(dp):: r_dt   = -1.0_cp
-    INTEGER :: i_ndata = -1 !> \brief Number of boundary data when there is no grouping by axis
+    INTEGER :: i_ndata = -1 !> @brief Number of boundary data when there is no grouping by axis
     !> Number of data points in each axis direction (used when there is a grouping by axis)
     !! In the case of a grouping by axis, the number of data on a boundary face orthogonal to the x axis is given by ny*nz; nx*nz for a face orthogonal to y axis and nx*ny for a face orthogonal to z axis. With nx=ia_nxyz(1), ny=ia_nxyz(2) and nz=ia_nxyz(3)
     !<
     INTEGER, DIMENSION(:), POINTER :: ia_nxyz
 !     INTEGER ::&
-!       i_ndata = -1 !> \brief Number of boundary data when there is no grouping by axis
+!       i_ndata = -1 !> @brief Number of boundary data when there is no grouping by axis
 !       i_nx = 1 !> Number of boundary data on the boundaries in the x direction (used when there is a grouping by axis)
 !       i_ny = 1 !> Number of boundary data on the boundaries in the y direction (used when there is a grouping by axis)
 !       i_nz = 1 !> Number of boundary data on the boundaries in the x direction (used when there is a grouping by axis)
 !     !In the case of a grouping by axis, the number of data on a boundary face orthogonal to the x axis is given by i_ny*i_nz; i_nx*i_nz for a face orthogonal to y axis and i_nx*i_ny for a face orthogonal to z axis.
 
-    !> \brief grouping status of BC data.
+    !> @brief grouping status of BC data.
     !! Are data grouped by axis limits? For example, bc for x_max(east), xmin (west), ymax(north), ymin(south), ...
     !! Grouping by axis limit facilitates the management for rectangular domains and regular discretization.
     !! It can be impractical for non rectangular domain or irregular discretization.
     !<
     LOGICAL :: l_by_axis
-    !> \brief integer coordinates status
+    !> @brief integer coordinates status
     !! Integer coordinates refer to the indices in a multi-D array, it is useful for rectangular domains and regular discretization.
     !! used only when there is no grouping by axis
     !<
     LOGICAL :: l_icoord
-    !> \brief real coordinates status
+    !> @brief real coordinates status
     !! The real coordinates are the coordinates in the physical space
     !! used only when there is no grouping by axis
     !<
     LOGICAL :: l_rcoord
-    !> \brief ordinal coordinates status
+    !> @brief ordinal coordinates status
     !! ordinal coordinates refer to the indices in a 1-D array, it is useful when the system state is store in a 1D array
     !! used only when there is no grouping by axis
     !<
     LOGICAL :: l_ocoord
   END TYPE bc_param
 
-  !> \brief User defined type for boundary data at runtime
+  !> @brief User defined type for boundary data at runtime
   !<
   TYPE bc_structure
     INTEGER :: i_ts
     REAL(dp):: r_date !> date associated with the boundary data
-    !> \brief grouping status of BC data.
+    !> @brief grouping status of BC data.
     !! Are data grouped by axis limits? For example, bc for x_max(east), xmin (west), ymax(north), ymin(south), ...
     !! Grouping by axis limit facilitates the management for rectangular domains and regular discretization.
     !! It can be impractical for non rectangular domain or irregular discretization.
     !<
     LOGICAL :: l_by_axis
-    !> \brief boundary data when there is no grouping by axis
+    !> @brief boundary data when there is no grouping by axis
     !! useful for unstructured grid or non rectangular domain
     !<
     REAL(dp), DIMENSION(:), POINTER :: ra_data => NULL() !> boundary data for vectorized state vector
@@ -78,36 +84,36 @@ MODULE bc_tools
       ra_zmin_bc => NULL(),&!> data for zmin(Bottom face) bounday
       ra_zmax_bc => NULL()  !> data for zmax(Top face) bounday
 
-!     !> \brief real coordinates status
+!     !> @brief real coordinates status
 !     !! this logical field says if real-type coordinates are presents.  Real coordinates are the coordinates in the physical domain
 !     !<
 !     LOGICAL :: l_rcoord = .FALSE.
-!     !> \brief integer coordinates status
+!     !> @brief integer coordinates status
 !     !! this logical field says if integer-type coordinates are presents. Integer coordinates are the indices in a multi-D array
 !     !<
 !     LOGICAL :: l_icoord = .FALSE.
-!     !> \brief ordinal index coordinates status
+!     !> @brief ordinal index coordinates status
 !     !! this logical field says if ordinal index coordinates are presents. ordinal index coordinates are the indices in a 1D array
 !     !<
 !     LOGICAL :: l_ocoord = .FALSE.
-!     !> \brief Allocation status of the integer coordinates array.
+!     !> @brief Allocation status of the integer coordinates array.
 !     !! this logical field says if there is a proper array allocated for the given structure variable. For a time dependent problem, the location of boundary data can be the same for every time step. In such a case, only one array of coordinates needs to be allocated for all time step in order to save memory space. The variable l_icoord_allocated is use to manage memory deallocation in this case.
 !     !<
 !     LOGICAL :: l_icoord_allocated = .FALSE.
-!     !> \brief Allocation status of the real coordinates array. See l_icoord_allocated for details
+!     !> @brief Allocation status of the real coordinates array. See l_icoord_allocated for details
 !     LOGICAL :: l_rcoord_allocated = .FALSE.
-!     !> \brief Allocation status of the ordinal index coordinates array. See l_icoord_allocated for details
+!     !> @brief Allocation status of the ordinal index coordinates array. See l_icoord_allocated for details
 !     LOGICAL :: l_ocoord_allocated = .FALSE.
-!     !> \brief boundary data coordinates, indices in the discretization grid
+!     !> @brief boundary data coordinates, indices in the discretization grid
 !     !! This array gives the indices of the boundary data in the computation grid.
 !     !! used only when there is no grouping by axis
 !     !<
 !     INTEGER, DIMENSION(:,:), POINTER ::  ia_icoord => NULL()
-!     !> \brief boundary data coordinates, real coordinates in the computation domain
+!     !> @brief boundary data coordinates, real coordinates in the computation domain
 !     !! used only when there is no grouping by axis
 !     !<
 !     REAL(dp), DIMENSION(:,:), POINTER :: ra_rcoord => NULL()
-!     !> \brief boundary data coordinates, ordinal index in the vectorized system state
+!     !> @brief boundary data coordinates, ordinal index in the vectorized system state
 !     !! used only when there is no grouping by axis
 !     !<
 !     INTEGER, DIMENSION(:), POINTER ::  ia_ocoord => NULL()
@@ -133,13 +139,13 @@ MODULE bc_tools
 
 CONTAINS
 
-  !> \brief load ctl parameters from a namelist file
-  !! \param[in,out] td_bcp data structure to be loaded
-  !! \param[in] ada_namelist name of the namelist file
-  !! \param[in] ada_varName name of the variable associated with td_bcp
-  !! \param[in] ndim number of dimensions of the physical space
-  !! \param[in] nxyz (optional) number of boundary data in each axis direction, the default value 1 is used for the direction where no information is provided. The number of boundary data includes the corner; Basically, it is equal to 2 plus the number of data in the corresponding dimension of the computational domain; Boundary data correspond to ghost points.
-  !! \param[in] dt time step of the model evolution
+  !> @brief load ctl parameters from a namelist file
+  !! @param [in,out] td_bcp data structure to be loaded
+  !! @param [in] ada_namelist name of the namelist file
+  !! @param [in] ada_varName name of the variable associated with td_bcp
+  !! @param [in] ndim number of dimensions of the physical space
+  !! @param [in] nxyz (optional) number of boundary data in each axis direction, the default value 1 is used for the direction where no information is provided. The number of boundary data includes the corner; Basically, it is equal to 2 plus the number of data in the corresponding dimension of the computational domain; Boundary data correspond to ghost points.
+  !! @param [in] dt time step of the model evolution
   !! The program automatically stops in IO error if the variable is not found in the namelist file
   !<
   SUBROUTINE load_bcp(td_bcp, ada_namelist, ada_varName, ndim, nxyz, dt)
@@ -201,8 +207,8 @@ CONTAINS
     td_bcp%aa_prefix  = TRIM( varName )
   END SUBROUTINE load_bcp
 
-  !> \brief print ctl parameters
-  !! \param[in] td_bcp data structure for ctl parameters
+  !> @brief print ctl parameters
+  !! @param [in] td_bcp data structure for ctl parameters
   !!
   !<
   SUBROUTINE print_bcp(td_bcp)
@@ -225,9 +231,9 @@ CONTAINS
     CALL debug('', '.......................................................', tag=dALLWAYS)
   END SUBROUTINE print_bcp
 
-  !> \brief Initializes boundary condition structure
-  !! \param[in out] td_bc boundary condition structure to be initialized
-  !! \param[in] td_bcp parameters to use for the initialization
+  !> @brief Initializes boundary condition structure
+  !! @param [in, out] td_bc boundary condition structure to be initialized
+  !! @param [in] td_bcp parameters to use for the initialization
   !<
   SUBROUTINE init_bcs(td_bc, td_bcp)
     TYPE(bc_structure), INTENT(IN OUT) :: td_bc
@@ -308,12 +314,12 @@ CONTAINS
   END SUBROUTINE reset_bcs
 
 
-  !> \brief extract boundary condition from a state variable
-  !! \param[in out] td_bc data structure for the boundary condition
-  !! \param[in] rda_state 2D array (state variable from which the extraction is performed)
-  !! \param[in] td_rs (optional) data structure describing the subdomain
-  !! \param[in] ts (optional) time state associated with the model state
-  !! \param[in] nghost (optional) number of ghost data at the boundaries (each boundary) of rda_state
+  !> @brief extract boundary condition from a state variable
+  !! @param [in, out] td_bc data structure for the boundary condition
+  !! @param [in] rda_state 2D array (state variable from which the extraction is performed)
+  !! @param [in] td_rs (optional) data structure describing the subdomain
+  !! @param [in] ts (optional) time state associated with the model state
+  !! @param [in] nghost (optional) number of ghost data at the boundaries (each boundary) of rda_state
   !! td_rs can described either the full domain (if BC needed for the full domain) or the subdomain of interest
   !! if td_rs is not provided, the full domain is considered
   !! if nghost is not provided, it is assumed that there is no ghost cell
@@ -366,10 +372,10 @@ CONTAINS
   END SUBROUTINE extract_bc_2d
 
 
-  !> \brief set boundary condition on a state variable
-  !! \param[in out] td_bc data structure for the boundary condition
-  !! \param[in] rda_state data structure of the state
-  !! \param[in] nghost (optional) number of ghost data at the boundaries (each boundary) of rda_state
+  !> @brief set boundary condition on a state variable
+  !! @param [in, out] td_bc data structure for the boundary condition
+  !! @param [in] rda_state data structure of the state
+  !! @param [in] nghost (optional) number of ghost data at the boundaries (each boundary) of rda_state
   !! This subroutine assumes that data structures are initialized with correct data and size
   !! if nghost is not provided, it is assumed that there is no ghost cell
   !<
@@ -404,9 +410,12 @@ CONTAINS
   END SUBROUTINE set_bc_2d
 
 
-  !> \brief Adjoint of set_bc_2d
-  !! \param[in] rda_statead data structure of the state
-  !! This subroutine assumes that data structures are initialized with correct data and size
+  !> @brief Adjoint of set_bc_2d
+  !! @param [in] td_bc data structure for the boundary condition
+  !! @param [in] rda_statead data structure of the state
+  !! @param [in] nghost number of ghost points
+  !! @details This subroutine assumes that data structures are initialized
+  !! with correct data and size
   !<
   SUBROUTINE set_bcAdj_2d(td_bc, rda_statead, nghost)
     TYPE(bc_structure), INTENT(IN)      :: td_bc

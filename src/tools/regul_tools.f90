@@ -1,5 +1,5 @@
-!> \file gradient.f90
-!! \brief routines to compute the gradient of a discretized (finite differences) function
+!> @file regul_tools.f90
+!! @brief  routines to compute the gradient of a discretized (finite differences) function
 !! @author Innocent Souopgui
 !! @version 1.0
 !<
@@ -8,14 +8,14 @@ MODULE regul_tools
   USE debug_tools
 IMPLICIT NONE
 
-  !> \brief Method used to compute the gradient
+  !> @brief  Method used to compute the gradient
   INTEGER, PARAMETER ::&
     BACKWARD = 17001,&
     FORWARD  = 17002,&
     CENTERED = 17003
   !>default value for constant grid spacing step
 
-  !> \brief interface for gradient approximation
+  !> @brief  interface for gradient approximation
   INTERFACE gradient
     MODULE PROCEDURE gradient_cs_1d!constant spacing
     MODULE PROCEDURE gradient_vs_1d!variable spacing
@@ -25,7 +25,7 @@ IMPLICIT NONE
     !MODULE PROCEDURE gradient_vs_3d!variable spacing
   END INTERFACE gradient
 
-  !> \brief interface for gradient approximation using centered differences
+  !> @brief  interface for gradient approximation using centered differences
   INTERFACE gradient_centered
     MODULE PROCEDURE gradient_ccs_1d!constant spacing
     !MODULE PROCEDURE gradient_cvs_1d!variable spacing
@@ -35,7 +35,7 @@ IMPLICIT NONE
     !MODULE PROCEDURE gradient_cvs_3d!variable spacing
   END INTERFACE gradient_centered
 
-  !> \brief interface for gradient approximation using forward differences
+  !> @brief  interface for gradient approximation using forward differences
   INTERFACE gradient_forward
     MODULE PROCEDURE gradient_fcs_1d!constant spacing
     MODULE PROCEDURE gradient_fvs_1d!variable spacing
@@ -45,7 +45,7 @@ IMPLICIT NONE
     !MODULE PROCEDURE gradient_fvs_3d!variable spacing
   END INTERFACE gradient_forward
 
-  !> \brief interface for gradient approximation using backward differences
+  !> @brief  interface for gradient approximation using backward differences
   INTERFACE gradient_backward
     MODULE PROCEDURE gradient_bcs_1d!constant spacing
     MODULE PROCEDURE gradient_bvs_1d!variable spacing
@@ -55,13 +55,13 @@ IMPLICIT NONE
     !MODULE PROCEDURE gradient_bvs_3d!variable spacing
   END INTERFACE gradient_backward
 
-  !> \brief interface for geostrophic_wind
+  !> @brief  interface for geostrophic_wind
   INTERFACE geostrophic_wind
     MODULE PROCEDURE geostrophic_wind_cgrid !>"staggered" Arakawa C-grid
   END INTERFACE geostrophic_wind
 
-  !> \brief interface for gradient regularization
-  !! \details Due to nonlinearities and the function implementation, the choice has been made to not accept default parameters; This made it easy to write adjoint code
+  !> @brief  interface for gradient regularization
+  !! @details  Due to nonlinearities and the function implementation, the choice has been made to not accept default parameters; This made it easy to write adjoint code
   !<
   INTERFACE grad_regul
     MODULE PROCEDURE grad_regul_cs_1d!constant spacing
@@ -87,7 +87,7 @@ IMPLICIT NONE
     MODULE PROCEDURE geostrophic_regul_cgrid
   END INTERFACE geostrophic_regul
 
-  !> \brief interface for square L2 norm
+  !> @brief  interface for square L2 norm
   INTERFACE square_L2_norm
     MODULE PROCEDURE square_L2_norm_1d
     MODULE PROCEDURE square_L2_norm_2d
@@ -108,8 +108,8 @@ CONTAINS
     END IF
   END FUNCTION disc_step
 
-  !> \brief Computes the square of the L2 norm of a discretized scalar function of one variable
-  !! \param[in] rda_f function whose the L2 norm is requested
+  !> @brief  Computes the square of the L2 norm of a discretized scalar function of one variable
+  !! @param [in] rda_f function whose the L2 norm is requested
   !<
   FUNCTION square_L2_norm_1d(rda_f) RESULT(rl_l2)
     REAL(KIND=cp), DIMENSION(:),   INTENT(IN)  :: rda_f!!scalar field
@@ -118,8 +118,8 @@ CONTAINS
     rl_l2 = 0.5_cp*SUM(rda_f**2)
   END FUNCTION square_L2_norm_1d
 
-  !> \brief Computes the square of the L2 norm of a discretized scalar function of two variables
-  !! \param[in] rda_f function whose the L2 norm is requested
+  !> @brief  Computes the square of the L2 norm of a discretized scalar function of two variables
+  !! @param [in] rda_f function whose the L2 norm is requested
   !<
   FUNCTION square_L2_norm_2d(rda_f) RESULT(rl_l2)
     REAL(KIND=cp), DIMENSION(:, :),   INTENT(IN)  :: rda_f!!scalar field
@@ -128,12 +128,12 @@ CONTAINS
     rl_l2 = 0.5_cp*SUM(rda_f**2)
   END FUNCTION square_L2_norm_2d
 
-  !> \brief Computes the gradient of a scalar function of one variable, constant spacing grid
-  !! \param[in] rda_f function whose the gradient is required
-  !! \param[out] rda_df gradient
-  !! \param[in] rd_dx optional, discretization step
-  !! \param[in] method method used for computation
-  !! \details If the discretization step is not given, it is assumed to be 1.0
+  !> @brief  Computes the gradient of a scalar function of one variable, constant spacing grid
+  !! @param [in] rda_f function whose the gradient is required
+  !! @param [out] rda_df gradient
+  !! @param [in] rd_dx optional, discretization step
+  !! @param [in] method method used for computation
+  !! @details  If the discretization step is not given, it is assumed to be 1.0
   !<
   SUBROUTINE gradient_cs_1d(rda_f, rda_df, method, rd_dx)
     REAL(KIND=cp), DIMENSION(:), INTENT(IN)  :: rda_f !!scalar vector fieldwhich gradient is to be computed
@@ -154,14 +154,14 @@ CONTAINS
     END SELECT
   END SUBROUTINE gradient_cs_1d
 
-  !> \brief Computes the gradient of a scalar function of two variables, constant spacing grid
-  !! \param[in] rda_f function whose the gradient is required
-  !! \param[out] rda_fx gradient along the first direction
-  !! \param[out] rda_fy gradient along the second direction
-  !! \param[in] rd_dx discretization step in the first direction
-  !! \param[in] rd_dy discretization step in the second direction
-  !! \param[in] method method used for computation
-  !! \details If the discretization steps are not given, they are assumed to be 1.0
+  !> @brief  Computes the gradient of a scalar function of two variables, constant spacing grid
+  !! @param [in] rda_f function whose the gradient is required
+  !! @param [out] rda_fx gradient along the first direction
+  !! @param [out] rda_fy gradient along the second direction
+  !! @param [in] rd_dx discretization step in the first direction
+  !! @param [in] rd_dy discretization step in the second direction
+  !! @param [in] method method used for computation
+  !! @details  If the discretization steps are not given, they are assumed to be 1.0
   !<
   SUBROUTINE gradient_cs_2d(rda_f, rda_fx, rda_fy, method, rd_dx, rd_dy)
     REAL(KIND=cp), DIMENSION(:, :), INTENT(IN)  :: rda_f!!scalar vector field which gradient is to be computed
@@ -183,11 +183,11 @@ CONTAINS
     END SELECT
   END SUBROUTINE gradient_cs_2d
 
-  !> \brief Computes the gradient of a scalar function of one variable, variable spacing grid
-  !! \param[in] rda_f function whose the gradient is required
-  !! \param[out] rda_df gradient
-  !! \param[in] rda_x discretization step in the first direction
-  !! \param[in] method method used for computation
+  !> @brief  Computes the gradient of a scalar function of one variable, variable spacing grid
+  !! @param [in] rda_f function whose the gradient is required
+  !! @param [out] rda_df gradient
+  !! @param [in] rda_x discretization step in the first direction
+  !! @param [in] method method used for computation
   !<
   SUBROUTINE gradient_vs_1d(rda_f, rda_df, method, rda_x)
     REAL(KIND=cp), DIMENSION(:), INTENT(IN)  :: rda_f, rda_x
@@ -205,11 +205,11 @@ CONTAINS
     END SELECT
   END SUBROUTINE gradient_vs_1d
 
-  !> \brief Computes the gradient of a scalar function of one variable, centered differences, constant spacing grid
-  !! \param[in] rda_f function whose the gradient is required
-  !! \param[out] rda_df gradient
-  !! \param[in] rd_dx discretization step
-  !! \details gradient of a scalar fields, center diferences on the interior and decentered difference on the boundaries
+  !> @brief  Computes the gradient of a scalar function of one variable, centered differences, constant spacing grid
+  !! @param [in] rda_f function whose the gradient is required
+  !! @param [out] rda_df gradient
+  !! @param [in] rd_dx discretization step
+  !! @details  gradient of a scalar fields, center diferences on the interior and decentered difference on the boundaries
   !<
   SUBROUTINE gradient_ccs_1d(rda_f, rda_df, rd_dx)
     REAL(KIND=cp), DIMENSION(:), INTENT(IN)  :: rda_f !!scalar vector fieldwhich gradient is to be computed
@@ -223,13 +223,13 @@ CONTAINS
     rda_df(n    ) = ( rda_f(n  ) - rda_f(n - 1) )/rd_dx!right boundary, backward difference
   END SUBROUTINE gradient_ccs_1d
 
-  !> \brief Computes the gradient of a scalar function of two variables, centered differences, constant spacing grid
-  !! \param[in] rda_f function whose the gradient is required
-  !! \param[out] rda_fx gradient along the first direction
-  !! \param[out] rda_fy gradient along the second direction
-  !! \param[in] rd_dx discretization step in the first direction
-  !! \param[in] rd_dy discretization step in the second direction
-  !! \details gradient of a scalar fields, center diferences on the interior and decentered difference on the boundaries
+  !> @brief  Computes the gradient of a scalar function of two variables, centered differences, constant spacing grid
+  !! @param [in] rda_f function whose the gradient is required
+  !! @param [out] rda_fx gradient along the first direction
+  !! @param [out] rda_fy gradient along the second direction
+  !! @param [in] rd_dx discretization step in the first direction
+  !! @param [in] rd_dy discretization step in the second direction
+  !! @details  gradient of a scalar fields, center diferences on the interior and decentered difference on the boundaries
   !<
   SUBROUTINE gradient_ccs_2d(rda_f, rda_fx, rda_fy, rd_dx, rd_dy)
     REAL(KIND=cp), DIMENSION(:, :), INTENT(IN)  :: rda_f!!scalar vector fieldwhich gradient is to be computed
@@ -249,10 +249,10 @@ CONTAINS
     rda_fy(:, ny    ) = ( rda_f(:, ny  ) - rda_f(:, ny - 1) )/rd_dy!upper boundary, backward difference
   END SUBROUTINE gradient_ccs_2d
 
-  !> \brief Computes the gradient of a scalar function of one variable, forward differences, constant spacing grid
-  !! \param[in] rda_f function whose the gradient is required
-  !! \param[out] rda_df gradient
-  !! \param[in] rd_dx discretization step in the first direction
+  !> @brief  Computes the gradient of a scalar function of one variable, forward differences, constant spacing grid
+  !! @param [in] rda_f function whose the gradient is required
+  !! @param [out] rda_df gradient
+  !! @param [in] rd_dx discretization step in the first direction
   !<
   SUBROUTINE gradient_fcs_1d(rda_f, rda_df, rd_dx)
     REAL(KIND=cp), DIMENSION(:), INTENT(IN)  :: rda_f !!scalar function which gradient is required
@@ -265,10 +265,10 @@ CONTAINS
     rda_df(n    ) = ( rda_f(n  ) - rda_f(n - 1) )/rd_dx!right boundary, backward difference
   END SUBROUTINE gradient_fcs_1d
 
-  !> \brief Computes the gradient of a scalar function of one variable, forward differences, variable spacing grid
-  !! \param[in] rda_f function whose the gradient is required
-  !! \param[out] rda_df gradient
-  !! \param[in] rda_x discretization step in the first direction
+  !> @brief  Computes the gradient of a scalar function of one variable, forward differences, variable spacing grid
+  !! @param [in] rda_f function whose the gradient is required
+  !! @param [out] rda_df gradient
+  !! @param [in] rda_x discretization step in the first direction
   !<
   SUBROUTINE gradient_fvs_1d(rda_f, rda_df, rda_x)
     REAL(KIND=cp), DIMENSION(:), INTENT(IN)  :: rda_f, rda_x
@@ -280,12 +280,12 @@ CONTAINS
     rda_df(n    ) = ( rda_f(n  ) - rda_f(n - 1) )/( rda_x(n  )-rda_x(n-1  ) )!right bound, back diff
   END SUBROUTINE gradient_fvs_1d
 
-  !> \brief Computes the gradient of a scalar function of two variables, forward differences, constant spacing grid
-  !! \param[in] rda_f function whose the gradient is required
-  !! \param[out] rda_fx gradient along the first direction
-  !! \param[out] rda_fy gradient along the second direction
-  !! \param[in] rd_dx discretization step in the first direction
-  !! \param[in] rd_dy discretization step in the second direction
+  !> @brief  Computes the gradient of a scalar function of two variables, forward differences, constant spacing grid
+  !! @param [in] rda_f function whose the gradient is required
+  !! @param [out] rda_fx gradient along the first direction
+  !! @param [out] rda_fy gradient along the second direction
+  !! @param [in] rd_dx discretization step in the first direction
+  !! @param [in] rd_dy discretization step in the second direction
   !<
   SUBROUTINE gradient_fcs_2d(rda_f, rda_fx, rda_fy, rd_dx, rd_dy)
     REAL(KIND=cp), DIMENSION(:, :),   INTENT(IN)  :: rda_f!!scalar vector field which gradient is to be computed
@@ -303,10 +303,10 @@ CONTAINS
     rda_fy(:, ny    ) = ( rda_f(:, ny  ) - rda_f(:, ny - 1) )/rd_dy!upper boundary, backward difference
   END SUBROUTINE gradient_fcs_2d
 
-  !> \brief Computes the gradient of a scalar function of one variable, backward differences, constant spacing grid
-  !! \param[in] rda_f function whose the gradient is required
-  !! \param[out] rda_df gradient
-  !! \param[in] rd_dx discretization step in the first direction
+  !> @brief  Computes the gradient of a scalar function of one variable, backward differences, constant spacing grid
+  !! @param [in] rda_f function whose the gradient is required
+  !! @param [out] rda_df gradient
+  !! @param [in] rd_dx discretization step in the first direction
   !<
   SUBROUTINE gradient_bcs_1d(rda_f, rda_df, rd_dx)
     REAL(KIND=cp), DIMENSION(:), INTENT(IN)  :: rda_f !!scalar function which gradient is required
@@ -319,10 +319,10 @@ CONTAINS
     rda_df(2:n) = ( rda_f(2:n) - rda_f(1:n-1) )/rd_dx!x : interior point, forward diff
   END SUBROUTINE gradient_bcs_1d
 
-  !> \brief Computes the gradient of a scalar function of one variable, backward differences, variable spacing grid
-  !! \param[in] rda_f function whose the gradient is required
-  !! \param[out] rda_df gradient
-  !! \param[in] rda_x discretization points
+  !> @brief  Computes the gradient of a scalar function of one variable, backward differences, variable spacing grid
+  !! @param [in] rda_f function whose the gradient is required
+  !! @param [out] rda_df gradient
+  !! @param [in] rda_x discretization points
   !<
   SUBROUTINE gradient_bvs_1d(rda_f, rda_df, rda_x)
     REAL(KIND=cp), DIMENSION(:), INTENT(IN)  :: rda_f, rda_x
@@ -334,12 +334,12 @@ CONTAINS
     rda_df(2:n) = ( rda_f(2:n) - rda_f(1:n-1) )/( rda_x(2:n)-rda_x(1:n-1) )!x : interior point, forward diff
   END SUBROUTINE gradient_bvs_1d
 
-  !> \brief Computes the gradient of a scalar function of two variables, backward differences, constant spacing grid
-  !! \param[in] rda_f function whose the gradient is required
-  !! \param[out] rda_fx gradient along the first direction
-  !! \param[out] rda_fy gradient along the second direction
-  !! \param[in] rd_dx discretization step in the first direction
-  !! \param[in] rd_dy discretization step in the second direction
+  !> @brief  Computes the gradient of a scalar function of two variables, backward differences, constant spacing grid
+  !! @param [in] rda_f function whose the gradient is required
+  !! @param [out] rda_fx gradient along the first direction
+  !! @param [out] rda_fy gradient along the second direction
+  !! @param [in] rd_dx discretization step in the first direction
+  !! @param [in] rd_dy discretization step in the second direction
   !<
   SUBROUTINE gradient_bcs_2d(rda_f, rda_fx, rda_fy, rd_dx, rd_dy)
     REAL(KIND=cp), DIMENSION(:, :),   INTENT(IN)  :: rda_f!!scalar vector field which gradient is to be computed
@@ -359,16 +359,24 @@ CONTAINS
 
   !geostrophic equilibrium tools
 
-  !> \brief Computes the theoretical wind that results from an exact balance between the Coriolis effect and the pressure gradient force
-  !! \param[in] rda_h surface elevation or pressure
-  !! \param[out] rda_u u component of the wind
-  !! \param[out] rda_v v component of the wind
-  !! \param[in] rd_dx space step in x direction
-  !! \param[in] rd_dy space step in y direction
-  !! \param[in] rd_g gravitational parameter
-  !! \param[in] rda_fu Coriolis parameter at u location (fu varies only in the y direction)
-  !! \param[in] rda_fv Coriolis parameter at v location (fv varies only in the y direction)
-  !! The "staggered" Arakawa C-grid is assumed, it is supposeed that velocity components are not stored for faces that coincide with the boundary. So that the the array h has 1 more element in the x direction (first index) than v, and 1 more element in the y direction (second index) than u. Decentered difference is used for the approximation of the gradient. Since each variable is stored at its own location, lenear interpolation is used to approximate h at each point.
+  !> @brief  Computes the theoretical wind that results from an exact balance between the Coriolis effect and the pressure gradient force
+  !! @param [in] rda_h surface elevation or pressure
+  !! @param [out] rda_u u component of the wind
+  !! @param [out] rda_v v component of the wind
+  !! @param [in] rd_dx space step in x direction
+  !! @param [in] rd_dy space step in y direction
+  !! @param [in] rd_g gravitational parameter
+  !! @param [in] rda_fu Coriolis parameter at u location (fu varies only in the y direction)
+  !! @param [in] rda_fv Coriolis parameter at v location (fv varies only in the y direction)
+  !! @details
+  !! The "staggered" Arakawa C-grid is assumed,
+  !! it is supposeed that velocity components are not stored
+  !! for faces that coincide with the boundary. So that
+  !! the array h has 1 more element in the x direction (first index)
+  !! than v, and 1 more element in the y direction (second index) than u.
+  !! Decentered difference is used for the approximation of the gradient.
+  !! Since each variable is stored at its own location,
+  !! linear interpolation is used to approximate h at each point.
   !! call as CALL geostrophic_wind_cgrid(rda_h, rda_u, rda_v, td_gp%dx, td_gp%dy, td_sw%r_g, rga_fu, rga_fv)
   !<
   SUBROUTINE geostrophic_wind_cgrid(rda_h, rda_u, rda_v, rd_dx, rd_dy, rd_g, rda_fu, rda_fv)
@@ -409,11 +417,11 @@ CONTAINS
     ) / (2.0_cp*rd_dx)
   END SUBROUTINE geostrophic_wind_cgrid
 
-  !> \brief Computes the gradient regularization term associated with a scalar function of one variable
-  !! \param[in] rda_f function whose the the gradient regularization term is required
-  !! \param[in] method method used for computation
-  !! \param[in] rd_dx discretization step
-  !! \details constant spacing grid
+  !> @brief  Computes the gradient regularization term associated with a scalar function of one variable
+  !! @param [in] rda_f function whose the the gradient regularization term is required
+  !! @param [in] method method used for computation
+  !! @param [in] rd_dx discretization step
+  !! @details  constant spacing grid
   !<
   FUNCTION grad_regul_cs_1d(rda_f, method, rd_dx) RESULT(rl_reg)
     REAL(KIND=cp), DIMENSION(:), INTENT(IN) :: rda_f
@@ -427,10 +435,10 @@ CONTAINS
     rl_reg = square_L2_norm(rla_fx)
   END FUNCTION grad_regul_cs_1d
 
-  !> \brief Computes the gradient regularization term associated with a scalar function of one variable
-  !! \param[in] rda_f function whose the the gradient regularization term is required
-  !! \param[in] method method used for computation
-  !! \details constant spacing grid with default value 1.0
+  !> @brief  Computes the gradient regularization term associated with a scalar function of one variable
+  !! @param [in] rda_f function whose the the gradient regularization term is required
+  !! @param [in] method method used for computation
+  !! @details  constant spacing grid with default value 1.0
   !<
   FUNCTION grad_regul_cs_1d_default(rda_f, method) RESULT(rl_reg)
     REAL(KIND=cp), DIMENSION(:), INTENT(IN) :: rda_f
@@ -443,11 +451,11 @@ CONTAINS
     rl_reg = grad_regul_cs_1d(rda_f, method, rl_dx)
   END FUNCTION grad_regul_cs_1d_default
 
-  !> \brief Computes the gradient regularization term associated with a scalar function of one variable
-  !! \param[in] rda_f function whose the the gradient regularization term is required
-  !! \param[in] method method used for computation
-  !! \param[in] rda_x discretization points
-  !! \details variable spacing grid
+  !> @brief  Computes the gradient regularization term associated with a scalar function of one variable
+  !! @param [in] rda_f function whose the the gradient regularization term is required
+  !! @param [in] method method used for computation
+  !! @param [in] rda_x discretization points
+  !! @details  variable spacing grid
   !<
   FUNCTION grad_regul_vs_1d(rda_f, method, rda_x) RESULT(rl_reg)
     REAL(KIND=cp), DIMENSION(:), INTENT(IN) :: rda_f, rda_x
@@ -460,12 +468,12 @@ CONTAINS
     rl_reg = square_L2_norm(rla_fx)
   END FUNCTION grad_regul_vs_1d
 
-  !> \brief Computes the gradient regularization term associated with a scalar function of two variables
-  !! \param[in] rda_f function whose the the gradient regularization term is required
-  !! \param[in] method method used for computation
-  !! \param[in] rd_dx discretization step in the first direction
-  !! \param[in] rd_dy discretization step in the second direction
-  !! \details constant spacing grid
+  !> @brief  Computes the gradient regularization term associated with a scalar function of two variables
+  !! @param [in] rda_f function whose the the gradient regularization term is required
+  !! @param [in] method method used for computation
+  !! @param [in] rd_dx discretization step in the first direction
+  !! @param [in] rd_dy discretization step in the second direction
+  !! @details  constant spacing grid
   !<
   FUNCTION grad_regul_cs_2d(rda_f, method, rd_dx, rd_dy) RESULT(rl_reg)
     REAL(KIND=cp), DIMENSION(:, :), INTENT(IN) :: rda_f
@@ -481,9 +489,9 @@ CONTAINS
     rl_reg  = rl_regx + rl_regy
   END FUNCTION grad_regul_cs_2d
 
-  !> \brief Computes the gradient regularization term associated with a scalar function of two variables
+  !> @brief  Computes the gradient regularization term associated with a scalar function of two variables
   !! \see grad_regul_cs_2d
-  !! \details the difference is that the arrays parameters are vectorized
+  !! @details  the difference is that the arrays parameters are vectorized
   !<
   FUNCTION grad_regul_cs_v2d(rda_f, id_nx, id_ny, method, rd_dx, rd_dy) RESULT(rl_reg)
     REAL(KIND=cp), DIMENSION(:), INTENT(IN) :: rda_f
@@ -497,12 +505,10 @@ CONTAINS
     rl_reg = grad_regul_cs_2d(rla_f, method, rd_dx, rd_dy)
   END FUNCTION grad_regul_cs_v2d
 
-  !> \brief Computes the gradient regularization term associated with a scalar function of two variables
-  !! \param[in] rda_f function whose the the gradient regularization term is required
-  !! \param[in] method method used for computation
-  !! \param[in] rd_dx discretization step in the first direction
-  !! \param[in] rd_dy discretization step in the second direction
-  !! \details constant spacing grid with default value 1.0
+  !> @brief  Computes the gradient regularization term associated with a scalar function of two variables
+  !! @param [in] rda_f function whose the the gradient regularization term is required
+  !! @param [in] method method used for computation
+  !! @details  constant spacing grid with default value 1.0
   !<
   FUNCTION grad_regul_cs_2d_default(rda_f, method) RESULT(rl_reg)
     REAL(KIND=cp), DIMENSION(:, :), INTENT(IN) :: rda_f
@@ -516,9 +522,9 @@ CONTAINS
     rl_reg = grad_regul_cs_2d(rda_f, method, rl_dx, rl_dy)
   END FUNCTION grad_regul_cs_2d_default
 
-  !> \brief Computes the gradient regularization term associated with a scalar function of two variables
+  !> @brief  Computes the gradient regularization term associated with a scalar function of two variables
   !! \see grad_regul_cs_2d_default
-  !! \details the difference is that the arrays parameters are vectorized
+  !! @details  the difference is that the arrays parameters are vectorized
   !<
   FUNCTION grad_regul_cs_v2d_default(rda_f, id_nx, id_ny, method) RESULT(rl_reg)
     REAL(KIND=cp), DIMENSION(:), INTENT(IN) :: rda_f
@@ -534,9 +540,9 @@ CONTAINS
     rl_reg = grad_regul_cs_2d(rla_f, method, rl_dx, rl_dy)
   END FUNCTION grad_regul_cs_v2d_default
 
-  !> \brief Compute the Tikhonov regularization term
-  !! \param[in] rda_f variable on which the regularization is computed
-  !! \param[in] rda_bf background estimation of rda_f
+  !> @brief  Compute the Tikhonov regularization term
+  !! @param [in] rda_f variable on which the regularization is computed
+  !! @param [in] rda_bf background estimation of rda_f
   !<
   FUNCTION tikhonov_regul_1d(rda_f, rda_bf) RESULT(rl_reg)
     REAL(KIND=cp), DIMENSION(:), INTENT(IN) :: rda_f
@@ -553,9 +559,9 @@ CONTAINS
     rl_reg = square_L2_norm(rla_f)
   END FUNCTION tikhonov_regul_1d
 
-  !> \brief Compute the Tikhonov regularization term
-  !! \param[in] rda_f variable on which the regularization is computed
-  !! \param[in] rda_bf background estimation of rda_f
+  !> @brief  Compute the Tikhonov regularization term
+  !! @param [in] rda_f variable on which the regularization is computed
+  !! @param [in] rda_bf background estimation of rda_f
   !<
   FUNCTION tikhonov_regul_2d(rda_f, rda_bf) RESULT(rl_reg)
     REAL(KIND=cp), DIMENSION(:,:), INTENT(IN) :: rda_f
@@ -572,15 +578,15 @@ CONTAINS
     rl_reg = square_L2_norm(rla_f)
   END FUNCTION tikhonov_regul_2d
 
-  !> \brief Computes the regulaisation term that measures the distance between the estimated wind and the geostrophic wind
-  !! \param[in] rda_h surface elevation or pressure
-  !! \param[out] rda_u u component of the wind
-  !! \param[out] rda_v v component of the wind
-  !! \param[in] rd_dx space step in x direction
-  !! \param[in] rd_dy space step in y direction
-  !! \param[in] rd_g gravitational parameter
-  !! \param[in] rda_fu Coriolis parameter at u location (fu varies only in the y direction)
-  !! \param[in] rda_fv Coriolis parameter at v location (fv varies only in the y direction)
+  !> @brief  Computes the regulaisation term that measures the distance between the estimated wind and the geostrophic wind
+  !! @param [in] rda_h surface elevation or pressure
+  !! @param [out] rda_u u component of the wind
+  !! @param [out] rda_v v component of the wind
+  !! @param [in] rd_dx space step in x direction
+  !! @param [in] rd_dy space step in y direction
+  !! @param [in] rd_g gravitational parameter
+  !! @param [in] rda_fu Coriolis parameter at u location (fu varies only in the y direction)
+  !! @param [in] rda_fv Coriolis parameter at v location (fv varies only in the y direction)
   !! The "staggered" Arakawa C-grid is assumed
   !! call as geostrophic_regul(rda_h, rda_u, rda_v, td_gp%dx, td_gp%dy, td_sw%r_g, rga_fu, rga_fv)
   !<

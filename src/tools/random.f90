@@ -94,36 +94,153 @@ MODULE random
 !     e-mail: amiller @ bigpond.net.au
 
 USE general_constant, only: cp
+use compiler_dependant
 
 IMPLICIT NONE
 REAL, PRIVATE      :: zero = 0.0, half = 0.5, one = 1.0, two = 2.0,   &
                       vsmall = TINY(1.0), vlarge = HUGE(1.0)
 PRIVATE            :: integral
 INTEGER, PRIVATE, PARAMETER :: dp = SELECTED_REAL_KIND(12, 60)
+real(cp), private, parameter :: RNORM_DEFAULT_DFACT = 4.0&
+                              , RNORM_MIN_DFACT = 3.0
 
-INTERFACE rand_normal
-  MODULE PROCEDURE rand_normal_scalar
-  MODULE PROCEDURE rand_normal_vector
-END INTERFACE rand_normal
 
-CONTAINS
+    interface init_random_seed
+        module procedure init_random_seed_optimal
+        module procedure init_random_seed_simple
+        module procedure init_random_seed_dtpn
+    end interface init_random_seed
 
-SUBROUTINE rand_normal_scalar(rd_rand)
-  REAL(KIND=cp), INTENT(OUT) :: rd_rand
-  rd_rand = random_normal()
-END SUBROUTINE rand_normal_scalar
+    !standard random normal
+    interface rand_normal
+        module procedure rand_normal_scalar
+        module procedure rand_normal_vector
+    end interface rand_normal
 
-SUBROUTINE rand_normal_vector(rda_rand)
-  REAL(KIND=cp), DIMENSION(:), INTENT(OUT) :: rda_rand
-  !local variables
-  INTEGER :: ibi
-  DO ibi = 1, SIZE(rda_rand)
-    !CALL init_random_seed()
-    rda_rand(ibi) = random_normal()
-  END DO
-END SUBROUTINE rand_normal_vector
+    !standard random normal
+    interface sd_rnormal
+        module procedure sd_rnormal_scalar
+        module procedure sd_rnormal_vector
+    end interface sd_rnormal
 
-FUNCTION random_normal() RESULT(fn_val)
+    !general random normal
+    interface rnormal
+        module procedure sd_rnormal_scalar
+        module procedure sd_rnormal_vector
+        module procedure rnormal_scalar
+        module procedure rnormal_vector
+    end interface rnormal
+
+contains
+
+   subroutine rand_normal_scalar(rd_rand)
+      real(kind=cp), intent(out) :: rd_rand
+      rd_rand = sd_random_normal()
+   end subroutine rand_normal_scalar
+
+   subroutine rand_normal_vector(rda_rand)
+      real(kind=cp), dimension(:), intent(out) :: rda_rand
+      !local variables
+      integer :: ibi
+      do ibi = 1, size(rda_rand)
+         !call init_random_seed()
+         rda_rand(ibi) = sd_random_normal()
+      end do
+   end subroutine rand_normal_vector
+
+   !> @brief Samples a random value from the standard normal distribution N(0,1)
+   !! @param [out] rd_rand generated random number
+   !! @param [in] dfact factor to define the max and min accepted values
+   !! any value grater than @a dfact in absolute value is rejected.
+   !!   If @a dfact is set to any less than 3, it is ignored and there is no rejection
+   !!   The default value is 4.0, any value greatter than 4 in absolute value is rejected,
+   !!   Those values represent less than 0.007% of the distribution
+   !!   @a dfact 3 represents less than 0.3%
+   !<
+   subroutine sd_rnormal_scalar(rd_rand, dfact)
+      real(kind=cp), intent(out) :: rd_rand
+      real(kind=cp), optional, intent(in) :: dfact
+      !local variables
+      real(cp) :: rl_fact
+      logical :: resample
+
+      if( present(dfact) )then
+         rl_fact = dfact
+      else
+         rl_fact = RNORM_DEFAULT_DFACT
+      end if
+      resample = (rl_fact>=RNORM_MIN_DFACT)
+
+      if(resample)then
+         rd_rand = rl_fact + 1.0_cp
+         do while(rd_rand>rl_fact)
+            rd_rand = sd_random_normal()
+         end do
+      else
+         rd_rand = sd_random_normal()
+      end if
+   end subroutine sd_rnormal_scalar
+
+   subroutine sd_rnormal_vector(rda_rand, dfact)
+      real(kind=cp), dimension(:), intent(out) :: rda_rand
+      real(kind=cp), optional, intent(in) :: dfact
+      !local variables
+      integer :: ibi
+      do ibi = 1, size(rda_rand)
+         call sd_rnormal_scalar(rda_rand(ibi), dfact)
+      end do
+   end subroutine sd_rnormal_vector
+
+   !> @brief Samples a random value from the normal distribution of mean mu and sd sigma
+   !! @param [out] rd_rand generated random number
+   !! @param [in] mu mean of the distribution
+   !! @param [in] sd Standard deviation of the distribution
+   !! @param [in] dfact factor to define the max and min accepted values
+   !!   the dfact helps to reject any value thal falls outside of a distance from the mean
+   !!   the distance being given by dfact*sigma. @a dfact must be greater or equal to 3.
+   !!   If @a dfact is set to any less than 3, there is no rejection
+   !!   The default value is 4.0, any value tha is 4sd away from the mean is rejected,
+   !!   Those values represent less than 0.007% of the distribution
+   !!   @a dfact 3 represents less than 0.3%
+   !<
+   subroutine rnormal_scalar(rd_rand, mu, sd, dfact)
+      real(kind=cp), intent(out) :: rd_rand
+      real(kind=cp), intent(in)  :: mu, sd
+      real(kind=cp), optional, intent(in) :: dfact
+      !local variables
+
+      call sd_rnormal_scalar(rd_rand, dfact)
+      if( (abs(mu)>epsilon(1.0_cp) ).or.(abs(sd-1.0_cp)>epsilon(1.0_cp)) ) then
+         rd_rand = sd*rd_rand+mu
+      end if
+
+   end subroutine rnormal_scalar
+
+
+   !> @brief Samples a random vector from the normal distribution of mean mu and sd sigma
+   !! @param [out] rda_rand generated random numbers vector
+   !! @param [in] mu mean of the distribution
+   !! @param [in] sd Standard deviation of the distribution
+   !! @param [in] dfact factor to define the max and min accepted values
+   !!   the dfact helps to reject any value thal falls outside of a distance from the mean
+   !!   the distance being given by dfact*sigma. @a dfact must be greater or equal to 3.
+   !!   If @a dfact is set to any less than 3, there is no rejection
+   !!   The default value is 4.0, any value tha is 4sd away from the mean is rejected,
+   !!   Those values represent less than 0.007% of the distribution
+   !!   @a dfact 3 represents less than 0.3%
+   !<
+   subroutine rnormal_vector(rda_rand, mu, sd, dfact)
+      real(kind=cp), dimension(:), intent(out) :: rda_rand
+      real(kind=cp), intent(in)  :: mu, sd
+      real(kind=cp), optional, intent(in) :: dfact
+
+      call sd_rnormal_vector(rda_rand, dfact)
+      if( (abs(mu)>epsilon(1.0_cp) ).or.(abs(sd-1.0_cp)>epsilon(1.0_cp)) ) then
+         rda_rand = sd*rda_rand + mu
+      end if
+   end subroutine rnormal_vector
+
+FUNCTION sd_random_normal() RESULT(fn_val)
 
 ! Adapted from the following Fortran 77 code
 !      ALGORITHM 712, COLLECTED ALGORITHMS FROM ACM.
@@ -166,7 +283,7 @@ END DO
 fn_val = v/u
 RETURN
 
-END FUNCTION random_normal
+END FUNCTION sd_random_normal
 
 
 
@@ -232,7 +349,7 @@ DO
 ! Generate v = (1+cx)^3 where x is random normal; repeat if v <= 0.
 
   DO
-    x = random_normal()
+    x = sd_random_normal()
     v = (one + c*x)**3
     IF (v > zero) EXIT
   END DO
@@ -615,7 +732,7 @@ END IF
 
 x(1:n) = h(1:n)
 DO j = 1,n
-  y = random_normal()
+  y = sd_random_normal()
   DO i = j,n
     x(i) = x(i) + f((j-1)*(n2-j)/2 + i) * y
   END DO ! i = j,n
@@ -787,7 +904,7 @@ IF (mu > 10.0) THEN
 
 !     STEP N. NORMAL SAMPLE - random_normal() FOR STANDARD NORMAL DEVIATE
 
-  g = mu + s*random_normal()
+  g = mu + s*sd_random_normal()
   IF (g > 0.0) THEN
     ival = INT( g )
 
@@ -1050,7 +1167,7 @@ REAL (dp)             :: fn_val
 
 REAL (dp) :: a1 = -4.166666666554424D-02, a2 = 2.430554511376954D-03,  &
              a3 = -7.685928044064347D-04, a4 = 5.660478426014386D-04,  &
-             temp, arg, product, lnrt2pi = 9.189385332046727D-1,       &
+             temp, arg, product_var, lnrt2pi = 9.189385332046727D-1,       &
              pi = 3.141592653589793D0
 LOGICAL   :: reflect
 
@@ -1074,9 +1191,9 @@ END IF
 
 !       Increase the argument, if necessary, to make it > 10.
 
-product = 1.d0
+product_var = 1.d0
 20 IF (arg <= 10.d0) THEN
-  product = product * arg
+  product_var = product_var * arg
   arg = arg + 1.d0
   GO TO 20
 END IF
@@ -1089,7 +1206,7 @@ END IF
 arg = arg - 0.5D0
 temp = 1.d0/arg**2
 fn_val = lnrt2pi + arg * (LOG(arg) - 1.d0 + &
-                  (((a4*temp + a3)*temp + a2)*temp + a1)*temp) - LOG(product)
+                  (((a4*temp + a3)*temp + a2)*temp + a1)*temp) - LOG(product_var)
 IF (reflect) THEN
   temp = SIN(pi * x)
   fn_val = LOG(pi/temp) - fn_val
@@ -1515,22 +1632,22 @@ REAL, INTENT(OUT)     :: result
 
 !     Local variables
 
-REAL (dp)  :: xmid, range, x1, x2,                                    &
+REAL (dp)  :: xmid, range_var, x1, x2,                                    &
   x(3) = (/0.238619186083197_dp, 0.661209386466265_dp, 0.932469514203152_dp/), &
   w(3) = (/0.467913934572691_dp, 0.360761573048139_dp, 0.171324492379170_dp/)
 INTEGER    :: i
 
 xmid = (a + b)/2._dp
-range = (b - a)/2._dp
+range_var = (b - a)/2._dp
 
 result = 0._dp
 DO i = 1, 3
-  x1 = xmid + x(i)*range
-  x2 = xmid - x(i)*range
+  x1 = xmid + x(i)*range_var
+  x2 = xmid - x(i)*range_var
   result = REAL( result + w(i)*(EXP(dk*COS(x1)) + EXP(dk*COS(x2))) )
 END DO
 
-result = REAL(result * range)
+result = REAL(result * range_var)
 RETURN
 END SUBROUTINE integral
 
@@ -1558,61 +1675,171 @@ END FUNCTION random_Cauchy
 
 
 
-SUBROUTINE random_order(order, n)
+    SUBROUTINE random_order(order, n)
 
-!     Generate a random ordering of the integers 1 ... n.
+    !     Generate a random ordering of the integers 1 ... n.
 
-INTEGER, INTENT(IN)  :: n
-INTEGER, INTENT(OUT) :: order(n)
+    INTEGER, INTENT(IN)  :: n
+    INTEGER, INTENT(OUT) :: order(n)
 
-!     Local variables
+    !     Local variables
 
-INTEGER :: i, j, k
-REAL    :: wk
+    INTEGER :: i, j, k
+    REAL    :: wk
 
-DO i = 1, n
-  order(i) = i
-END DO
+    DO i = 1, n
+    order(i) = i
+    END DO
 
-!     Starting at the end, swap the current last indicator with one
-!     randomly chosen from those preceeding it.
+    !     Starting at the end, swap the current last indicator with one
+    !     randomly chosen from those preceeding it.
 
-DO i = n, 2, -1
-  CALL RANDOM_NUMBER(wk)
-  j = INT(1 + i * wk)
-  IF (j < i) THEN
-    k = order(i)
-    order(i) = order(j)
-    order(j) = k
-  END IF
-END DO
+    DO i = n, 2, -1
+    CALL RANDOM_NUMBER(wk)
+    j = INT(1 + i * wk)
+    IF (j < i) THEN
+        k = order(i)
+        order(i) = order(j)
+        order(j) = k
+    END IF
+    END DO
 
-RETURN
-END SUBROUTINE random_order
+    RETURN
+    END SUBROUTINE random_order
 
 
 
-SUBROUTINE seed_random_number(iounit)
+    !> @brief initialize the random seed with a varying seed in order to ensure a
+    !>   different random number sequence for each invocation of the program.
+    !!
+    !! \details
+    !!   not usefull where reproducibility is a concern
+    !!   courtesy of GNU project: http://gcc.gnu.org/onlinedocs/gfortran/RANDOM_005fSEED.html#RANDOM_005fSEED
+    !<
+    subroutine init_random_seed_optimal()
+        implicit none
+        integer, allocatable :: seed(:)
+        integer :: i, n, istat, dt(8), pid
+        integer(int64) :: t
 
-INTEGER, INTENT(IN)  :: iounit
+        integer, parameter :: un=703
 
-! Local variables
+        call random_seed(size = n)
+        allocate(seed(n))
+        ! First try if the OS provides a random number generator
+        open(unit=un, file="/dev/urandom", access="stream", &
+            form="unformatted", action="read", status="old", iostat=istat)
+        if (istat == 0) then
+            read(un) seed
+            close(un)
+        else
+            !The PID is
+            ! useful in case one launches multiple instances of the same
+            ! program in parallel.
+            !call system_clock(t)
+            if (t == 0) then
+                call date_and_time(values=dt)
+                t = (dt(1) - 1970) * 365_int64 * 24 * 60 * 60 * 1000 &
+                + dt(2) * 31_int64 * 24 * 60 * 60 * 1000 &
+                + dt(3) * 24_int64 * 60 * 60 * 1000 &
+                + dt(5) * 60 * 60 * 1000 &
+                + dt(6) * 60 * 1000 + dt(7) * 1000 &
+                + dt(8)
+            end if
+            pid = getpid()
+            t = ieor( t, int(pid, kind(t)) )
+            do i = 1, n
+                seed(i) = lcg(t)
+            end do
+        end if
+        call random_seed(put=seed)
+        !print*, "optimal seed = ", seed
+    end subroutine init_random_seed_optimal
 
-INTEGER              :: k
-INTEGER, ALLOCATABLE :: seed(:)
+    !>Initializes the random seed with information from a given
+    !! date (YYYYMMDD), time (HHmmSS), process num (parallel environment)
+    !! and the member number (Ensemble Kalman filter)
+    subroutine init_random_seed_dtpn(idat, itime, proc_num, member_num)
+        integer, intent(in) :: idat, itime, proc_num, member_num
 
-CALL RANDOM_SEED(SIZE=k)
-ALLOCATE( seed(k) )
+        !local variables
+        integer, allocatable :: seed(:)
+        integer :: i, n
+        integer(int64) :: t
 
-WRITE(*, '(a, i2, a)')' Enter ', k, ' integers for random no. seeds: '
-READ(*, *) seed
-WRITE(iounit, '(a, (7i10))') ' Random no. seeds: ', seed
-CALL RANDOM_SEED(PUT=seed)
+        call random_seed( size = n )
+        allocate( seed(n) )
+        t = int(idat*1000000_int64 + itime, int64)*int(proc_num + member_num, int64)
+        do i = 1, n
+            seed(i) = lcg(t)
+        end do
 
-DEALLOCATE( seed )
+        call random_seed( put=seed )
+        !print*, "init_random_seed = ", seed
 
-RETURN
-END SUBROUTINE seed_random_number
+    end subroutine init_random_seed_dtpn
+
+    !> @brief initialize the random seed with a reproducible seed
+    !! @param [in] seed_base user provided number to generate the reproducible seed.
+    !<
+    subroutine init_random_seed_simple( seed_base )
+        implicit none
+        integer, intent(in) :: seed_base
+        integer, allocatable :: seed(:)
+        integer :: i, n
+        integer(int64) :: t
+
+
+        call random_seed( size = n )
+        allocate( seed(n) )
+        t = seed_base
+        do i = 1, n
+            seed(i) = lcg(t)
+        end do
+
+        call random_seed( put=seed )
+        print*, "Simple seed = ", seed
+
+    end subroutine init_random_seed_simple
+
+    !> @brief Simple PRNG might not be good enough for real work, but is
+    !! sufficient for seeding a better PRNG.
+    !! \details  see http://gcc.gnu.org/onlinedocs/gfortran/RANDOM_005fSEED.html#RANDOM_005fSEED
+    !<
+    function lcg(s)
+        integer :: lcg
+        integer(int64), intent(in out) :: s
+        if (s == 0) then
+            s = 104729
+        else
+            s = mod(s, 4294967296_int64)
+        end if
+        s = mod(s * 279470273_int64, 4294967291_int64)
+        lcg = int(mod(s, int(huge(0), 8)), kind(0))
+    end function lcg
+
+
+    SUBROUTINE seed_random_number(iounit)
+
+        INTEGER, INTENT(IN)  :: iounit
+
+        ! Local variables
+
+        INTEGER              :: k
+        INTEGER, ALLOCATABLE :: seed(:)
+
+        CALL RANDOM_SEED(SIZE=k)
+        ALLOCATE( seed(k) )
+
+        WRITE(*, '(a, i2, a)')' Enter ', k, ' integers for random no. seeds: '
+        READ(*, *) seed
+        WRITE(iounit, '(a, (7i10))') ' Random no. seeds: ', seed
+        CALL RANDOM_SEED(PUT=seed)
+
+        DEALLOCATE( seed )
+
+        RETURN
+    END SUBROUTINE seed_random_number
 
 
 END MODULE random

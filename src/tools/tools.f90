@@ -1,5 +1,5 @@
 !> \file tools.f90
-!! \brief general tools definition
+!! @brief general tools definition
 !! @author Innocent Souopgui
 !! \details
 !! 1D dynamic array, 2D dynamic array. The 2D Dynamic arrays look like java 2D, it is a 1D array of 1D array.
@@ -16,14 +16,14 @@ IMPLICIT NONE
         MODULE PROCEDURE assign_2DdrA_2DA!> assign 2D array to d2Da
      END INTERFACE
 
-    !> \brief sort routines, selection
+    !> @brief sort routines, selection
     !<
     INTERFACE select_sort
       MODULE PROCEDURE select_sort_int
       !MODULE PROCEDURE select_sort_sp_real
       !MODULE PROCEDURE select_sort_dp_real
     END INTERFACE
-    !> \brief switch routines
+    !> @brief switch routines
     !<
     INTERFACE switch
       MODULE PROCEDURE switch_int
@@ -52,32 +52,32 @@ IMPLICIT NONE
     INTEGER, PARAMETER :: OBS_CMAT  = 1!> constant for covariance matrix field of dynamic observation vector
     INTEGER, PARAMETER :: OBS_XIDX  = 2!> constant for H field of dynamic observation vector
 
-    !> \brief dynamic real vector
+    !> @brief dynamic real vector
     TYPE dyn_rVector
         REAL(KIND=cp), DIMENSION(:), POINTER :: dat => NULL()
     END TYPE dyn_rVector
 
-    !> \brief dynamic integer vector
+    !> @brief dynamic integer vector
     TYPE dyn_iVector
         INTEGER, DIMENSION(:), POINTER :: dat => NULL()
     END TYPE dyn_iVector
 
-    !> \brief character vector
+    !> @brief character vector
     TYPE dyn_sVector
         CHARACTER(LEN=ip_snl), DIMENSION(:), POINTER :: dat => NULL()
     END TYPE dyn_sVector
 
-    !> \brief 2D dynamic real array (array of arrays), java style 2D array
+    !> @brief 2D dynamic real array (array of arrays), java style 2D array
     TYPE dyn_2DrArray
         TYPE(dyn_rVector), DIMENSION(:), POINTER :: dat => NULL()
     END TYPE dyn_2DrArray
 
-    !> \brief 2D dynamic integer array (array of arrays), java style 2D array
+    !> @brief 2D dynamic integer array (array of arrays), java style 2D array
     TYPE dyn_2DiArray
         TYPE(dyn_iVector), DIMENSION(:), POINTER :: dat => NULL()
     END TYPE dyn_2DiArray
 
-    !> \brief observation vector at a given date
+    !> @brief observation vector at a given date
     !!
     !<
     TYPE dyn_oVector
@@ -117,12 +117,14 @@ CONTAINS
       id_b = il_tmp
     END SUBROUTINE switch_int
 
-    !> \brief assign observation data to a dynamic observation vector
-    !! \param[in, out] td_dra dynamic observation vector (structure)
-    !! \param[in] rda_data observation data
-    !! \param[in] ida_H indexes of observation data in spatial grid
-    !! \param[in] rda_Rm1 diagonal matrix, inverse of the observation's covariance error (can be extended to 2D)
-    !! \details ida_idx and rda_Rm1 are optional since they can be identic for all observation date in time
+    !> @brief assign observation data to a dynamic observation vector
+    !! @param [in, out] td_dov dynamic observation vector (structure)
+    !! @param [in] rda_data observation data
+    !! @param [in] ida_H indexes of observation data in spatial grid
+    !! @param [in] rda_Rm1 diagonal matrix, inverse of the observation's
+    !!  covariance error (can be extended to 2D)
+    !! @details ida_idx and rda_Rm1 are optional since they can be identic
+    !! for all observation date in time
     !<
     SUBROUTINE assign_dov_vector(td_dov, rda_data, rda_Rm1, ida_H)
         TYPE(dyn_oVector), INTENT(INOUT)        :: td_dov
@@ -147,8 +149,8 @@ CONTAINS
         IF(ll_Rm1) td_dov%Rm1 = rda_Rm1
     END SUBROUTINE assign_dov_vector
 
-    !> \brief nullify pointer component of dynamic observation vector
-    !! \param[in, out] td_dov observation vector to be nullify
+    !> @brief nullify pointer component of dynamic observation vector
+    !! @param [in, out] td_dov observation vector to be nullify
     !<
     SUBROUTINE dov_nullify(td_dov)
         TYPE(dyn_oVector), INTENT(INOUT) :: td_dov
@@ -160,10 +162,10 @@ CONTAINS
         td_dov%H_allocated = .FALSE.
     END SUBROUTINE dov_nullify
 
-    !< \brief Sample observation from state variable
-    !! \param[in] rda_x state variable
-    !! \param[in, out] rda_yo observation variable
-    !! \param[in] rda_e additive error (same shape as rda_yo) to corrupt obs
+    !< @brief Sample observation from state variable
+    !! @param [in] rda_x state variable
+    !! @param [in, out] rda_yo observation variable
+    !! @param [in] rda_e additive error (same shape as rda_yo) to corrupt obs
     !>
     SUBROUTINE sample_1D_direct_obs(rda_x, rda_idx, rda_yo, rda_e)
         REAL(KIND=cp), DIMENSION(:), INTENT(IN)           :: rda_x
@@ -179,10 +181,10 @@ CONTAINS
     END SUBROUTINE sample_1D_direct_obs
 
     !>resize the observation vector structure
-    !! \param[in, out] td_dov observation vector to be resized
-    !! \param[in] id_size new size of the observation vector
-    !! \param[in] ld_Rm1 says if the field R (covariance) need to be allocated, default is .FALSE.
-    !! \param[in] ld_H says if the field H (projection obs operator) need to be allocated, default is .FALSE.
+    !! @param [in, out] td_dov observation vector to be resized
+    !! @param [in] id_size new size of the observation vector
+    !! @param [in] ld_Rm1 says if the field R (covariance) need to be allocated, default is .FALSE.
+    !! @param [in] ld_H says if the field H (projection obs operator) need to be allocated, default is .FALSE.
     !<
     SUBROUTINE reset_dov(td_dov, id_size, ld_Rm1, ld_H)
         TYPE(dyn_oVector), INTENT(INOUT) :: td_dov
@@ -218,9 +220,9 @@ CONTAINS
     END SUBROUTINE reset_dov
 
     !>resize a field of the observation vector structure
-    !! \param[in, out] td_dov observation vector to be resized
-    !! \param[in] id_size new size of the observation vector
-    !! \param[in] id_field identificator for the field to be resized. accepted values : OBS_FIELD (for data field), OBS_CMAT (for covariance matrix), OBS_XIDX (for x indices)
+    !! @param [in, out] td_dov observation vector to be resized
+    !! @param [in] id_size new size of the observation vector
+    !! @param [in] id_field identificator for the field to be resized. accepted values : OBS_FIELD (for data field), OBS_CMAT (for covariance matrix), OBS_XIDX (for x indices)
     !!
     !<
     SUBROUTINE reset_dov_field(td_dov, id_size, id_field)
@@ -302,8 +304,8 @@ CONTAINS
         td_dra%dat = rd_data
     END SUBROUTINE assign_drv_vector
 
-    !> \brief nullify pointer component of dynamic real vector
-    !! \param[in, out] td_drv dynamic real vector to be nullify
+    !> @brief nullify pointer component of dynamic real vector
+    !! @param [in, out] td_drv dynamic real vector to be nullify
     !<
     SUBROUTINE drv_nullify(td_drv)
         TYPE(dyn_rVector), INTENT(INOUT) :: td_drv
@@ -450,9 +452,9 @@ CONTAINS
         END IF
     END SUBROUTINE reset_dsv
 
-    !< \brief assign 1D array data to a 2D dynamic vector, the second dimension of the dynamic array is resize to 1
-    !! \param[in, out] td_dd 2D dynamic array to wich one wants to assign a 1D array
-    !! \param[in] rd_data array data to be assigned
+    !< @brief assign 1D array data to a 2D dynamic vector, the second dimension of the dynamic array is resize to 1
+    !! @param [in, out] td_dd 2D dynamic array to wich one wants to assign a 1D array
+    !! @param [in] rd_data array data to be assigned
     !! \todo overload assignment operator
     !>
     SUBROUTINE assign_2DdrA_vector(td_dd, rda_data)
@@ -463,9 +465,9 @@ CONTAINS
         td_dd%dat(1) = rda_data
     END SUBROUTINE assign_2DdrA_vector
 
-    !< \brief assign 2D array data to a 2D dynamic array
-    !! \param[in, out] td_dd 2D dynamic array to wich one wants to assign a 2D array
-    !! \param[in] rd_data array data to be assigned
+    !< @brief assign 2D array data to a 2D dynamic array
+    !! @param [in, out] td_dd 2D dynamic array to wich one wants to assign a 2D array
+    !! @param [in] rd_data array data to be assigned
     !! \todo overload assignment operator
     !! \details each element of td_dd receives a column of rda_data, recall that 2D dynamic array is a java style 2D array
     !! column major assumption
@@ -481,11 +483,11 @@ CONTAINS
         END DO
     END SUBROUTINE assign_2DdrA_2DA
 
-    !< \brief assign 1D array data to an element of a 2D dynamic array
+    !< @brief assign 1D array data to an element of a 2D dynamic array
     !! recall that, a 2D dynamic array is like java 2D array
-    !! \param[in, out] td_dd 2D dynamic array to wich one wants to put a 1D vector
-    !! \param[in] rd_data vector data to be assigned
-    !! \param[in] id_idx index of the 1D vector in td_dd, recall that 2D dynamic array is a java style 2D array
+    !! @param [in, out] td_dd 2D dynamic array to wich one wants to put a 1D vector
+    !! @param [in] rd_data vector data to be assigned
+    !! @param [in] id_idx index of the 1D vector in td_dd, recall that 2D dynamic array is a java style 2D array
     !! \details
     !! \remark call to this routine can causes segmentation fault
     !! if the first dimension of the td_dd is less than id_idx
@@ -498,11 +500,11 @@ CONTAINS
         td_dd%dat(id_idx) = rda_data
     END SUBROUTINE put_2DdrA_vector
 
-    !< \brief get a 1D array data from a 2D dynamic array
+    !< @brief get a 1D array data from a 2D dynamic array
     !! recall that, a 2D dynamic array is like java 2D array
-    !! \param[in] td_dd 2D dynamic array from wich one wants to get a 1D vector
-    !! \param[out] rda_data vector data to be get from td_dd
-    !! \param[in] id_idx index of the 1D vector in td_dd, recall that 2D dynamic array is a java style 2D array
+    !! @param [in] td_dd 2D dynamic array from wich one wants to get a 1D vector
+    !! @param [out] rda_data vector data to be get from td_dd
+    !! @param [in] id_idx index of the 1D vector in td_dd, recall that 2D dynamic array is a java style 2D array
     !! \details
     !! \remark call to this routine can cause segmentation fault
     !! if the first dimension of the td_dd is less than id_idx
@@ -614,12 +616,12 @@ CONTAINS
         END DO
     END FUNCTION d2DrA_maxval
 
-    !> \brief compute the number of regularly-spaced coordinates
-    !! \param[in] ida_max maximum coordinates that can be generate in each dimension
-    !! \param[in] shifts optional minimum coordinates that can be generate in each dimension, default is 1 for each dimension. They give the lowest coordinates.
-    !! \param[in] steps step between successive coordinates in each dimension
-    !! \param[out] ncoords optional coordinates count in each dimension
-    !! \detail Asumming that dim_count is the number of dimensions of the problem, steps, ida_max [, shifts] [and ncoords]  are one-dimensional arrays of size dim_count each. This subroutine also compute the number of regularly-spaced coordinates in each dimension of the problem, see the optional argument ncoords
+    !> @brief compute the number of regularly-spaced coordinates
+    !! @param [in] ida_max maximum coordinates that can be generate in each dimension
+    !! @param [in] shifts optional minimum coordinates that can be generate in each dimension, default is 1 for each dimension. They give the lowest coordinates.
+    !! @param [in] steps step between successive coordinates in each dimension
+    !! @param [out] ncoords optional coordinates count in each dimension
+    !! @details Asumming that dim_count is the number of dimensions of the problem, steps, ida_max [, shifts] [and ncoords]  are one-dimensional arrays of size dim_count each. This subroutine also compute the number of regularly-spaced coordinates in each dimension of the problem, see the optional argument ncoords
     !! \todo add a version for real coordinates and use the overloading, rename this as regular_int_coord_count
     !<
     FUNCTION regular_coord_count(ida_max, shifts, steps, ncoords) RESULT(il_count)
@@ -644,13 +646,13 @@ CONTAINS
       IF( PRESENT(ncoords) ) ncoords = ila_count
     END FUNCTION regular_coord_count
 
-    !> \brief build regularly-spaced coordinates of type integer
-    !! \param[out] ida_coord regularly-spaced coordinates generated by the subroutine
-    !! \param[in] ncoords optional array giving the number of coordinates in each dimension
-    !! \param[in] max_coords optional array giving the maximum coordinate in each dimension
-    !! \param[in] shifts optional array giving the shift from zero in each dimension. Default is 1 to conform to one-base indexation in fortran.
-    !! \param[in] steps optional array giving the step between successive coordinates in each dimension. Default is 1.
-    !! \detail At least one of ncoords and max_coords must be provided. If ncoords is provided, max_coords is not necessary. Asumming that coord_count is the total number of coordinates to generate and dim_count is the number of dimensions of the problem, ida_coord is of shape (dim_count, coord_count). The second dimension can be larger than coord_count but not less. ida_step, ida_max and ida_min (if provided) are one-dimensional array of size dim_count.
+    !> @brief build regularly-spaced coordinates of type integer
+    !! @param [out] ida_coord regularly-spaced coordinates generated by the subroutine
+    !! @param [in] ncoords optional array giving the number of coordinates in each dimension
+    !! @param [in] max_coords optional array giving the maximum coordinate in each dimension
+    !! @param [in] shifts optional array giving the shift from zero in each dimension. Default is 1 to conform to one-base indexation in fortran.
+    !! @param [in] steps optional array giving the step between successive coordinates in each dimension. Default is 1.
+    !! @details At least one of ncoords and max_coords must be provided. If ncoords is provided, max_coords is not necessary. Asumming that coord_count is the total number of coordinates to generate and dim_count is the number of dimensions of the problem, ida_coord is of shape (dim_count, coord_count). The second dimension can be larger than coord_count but not less. ida_step, ida_max and ida_min (if provided) are one-dimensional array of size dim_count.
     !! This routine is used to build regularly-spaced coordinates for twin observation. The coordinates are 1-based indexed for fortran default indexation. The integer coordinates can easilly be converted to real-value coordinates if uniformly-spaced mesh is used. Shift to 0-based index and multiply by the space step (each dimension separately if the space step if different for each), then add the real-coordinates of the origin if not 0.
     !<
     SUBROUTINE build_regular_int_coord(ida_coord, ncoords, max_coords, shifts, steps)
@@ -710,11 +712,11 @@ CONTAINS
       END IF
     END SUBROUTINE build_regular_int_coord
 
-    !> \brief Builds regularly spaced indices
-    !! \param[in, out] ida_idx array of builded indices
-    !! \param[in] id_idxMin minimal value for idx
-    !! \param[in] id_idxMax maximal value for idx
-    !! \param[in] id_obsDist distance between two observations
+    !> @brief Builds regularly spaced indices
+    !! @param [in, out] ida_idx array of builded indices
+    !! @param [in] id_idxMin minimal value for idx
+    !! @param [in] id_idxMax maximal value for idx
+    !! @param [in] id_obsDist distance between two observations
     !! \remark: this subroutine was previously named build_regular_idx
     !>
     SUBROUTINE build_regular_idx(ida_idx, id_idxMin, id_idxMax, id_obsDist)
@@ -729,16 +731,25 @@ CONTAINS
         END DO
     END SUBROUTINE build_regular_idx
 
-    !> \brief Save 1D trajectory in ascii file
-    !! \param[in] tda_trj the trajectory to be saved
-    !! \param[in] ada_fileName, name of the file in wich date should be saved
-    !! \param[in] id_lb (optional) lower bound of the interresting part of data to be saved at each time step
-    !! \param[in] id_ub (optional) upper bound of the interresting part of data to be saved at each time step
-    !! \param[in] ld_interpolate (optional) says if interpolation is needed. This is the case if one need all data to be saved at the same location
-    !! \param[in] ld_column (optional) says if each element of the trajectory should be considered as a column(usefull for gnuplot)
-    !! \details Data are saved time step by time step : old the date from the first time step, then the second time step and so on.
-    !! parameters id_lb, id_ub are useful in the case where one do not want to save everything, for exemple, the extension of the state variable for boundary condition
-    !! Interpolation suppose that the variable is computed between grid point, the goal is to interpolate to grid point before saving. In this case, id_lb, id_ub are the bound of the computed variable.
+    !> @brief Save 1D trajectory in ascii file
+    !! @param [in] tda_trj the trajectory to be saved
+    !! @param [in] ada_fileName path to the file in wich date should be saved
+    !! @param [in] id_lb (optional) lower bound of the interresting part
+    !!  of data to be saved at each time step
+    !! @param [in] id_ub (optional) upper bound of the interresting part
+    !!  of data to be saved at each time step
+    !! @param [in] ld_interpolate (optional) says if interpolation is needed.
+    !!  This is the case if one need all data to be saved at the same location
+    !! @param [in] ld_column (optional) says if each element of the trajectory
+        !! should be considered as a column(usefull for gnuplot)
+    !! @details Data are saved time step by time step : old the date from
+    !!  the first time step, then the second time step and so on.
+    !! parameters id_lb, id_ub are useful in the case where one do not want
+    !! to save everything, for exemple, the extension of the state variable
+    !! for boundary condition
+    !! Interpolation suppose that the variable is computed between grid point,
+    !! the goal is to interpolate to grid point before saving.
+    !! In this case, id_lb, id_ub are the bound of the computed variable.
     !<
     SUBROUTINE save_trj(tda_trj, ada_fileName, id_lb, id_ub, ld_interpolate, ld_column)
       INTEGER, PARAMETER :: ip_fid = 41
