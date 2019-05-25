@@ -33,7 +33,6 @@ to his/her problem. For example, the toolbox contains supports for:
 - Explicit localization in covariance matrices.
 - Observation data structure and manipulation functions.
 - GMRES solver.
-- RBCG solver.
 - CSR sparse matrix.
 - Basic regularization.
 - Generalized diffusion projection.
