@@ -151,4 +151,4 @@ Release notes
 =============
 The code is used only internally for development and will be released later
 when it is ready for distribution. If you are interested in trying it, let me 
-know, I will get you started and ready to use the Data Assimilation toolbox
+know, I will get you started and ready to use the Data Assimilation toolbox.
