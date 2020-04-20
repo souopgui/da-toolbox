@@ -33,7 +33,7 @@ implicit none
 #elif defined(__SUNPRO_F90)
 !sunpro specifics
 #else
-!this option is especially used with pgf90 12.3-0 (old compilers) for NRL NCOM
+!this option is especially used with pgf90 12.3-0 (old compilers)
    integer, parameter :: int64 = 8
 #endif
 contains
